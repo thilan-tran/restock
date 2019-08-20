@@ -49,7 +49,7 @@ def get_stock_price(symbol):
 def iex_stocks_by_symbol(symbol):
     data = requests.get(iex_url + symbol).json()
     if data:
-        return data[0]['lastSalePrice']
+        return data[0]
     return None
 
 def av_stocks_by_symbol(symbol):

@@ -1,7 +1,7 @@
 import datetime
 from sqlalchemy.orm import validates
 from restock import db
-from restock.models.user import User, BalanceHistory
+from restock.models.user import User, update_records
 
 class StockAggregate(db.Model):
 
@@ -82,12 +82,13 @@ class StockPurchase(db.Model):
 
     def update_price(self, new_price):
         change = self.shares * (new_price - self.current_price)
-        print(self.symbol, 'purchase changed by', change)
+        change = -1 * change if self.is_short else change
+        print(self.symbol, 'short' if self.is_short else 'purchase', 'changed by', change)
 
         if change:
             self.current_price = new_price
             self.user.balance += change
-            balance_hist = BalanceHistory(self.user.balance, self.user)
+            update_records(self.user.balance, self.user)
 
     @validates('shares')
     def validate_num_shares(self, key, shares):

@@ -1,3 +1,4 @@
+import time
 from flask import Blueprint, jsonify, request
 from restock import db
 from restock.models.user import User
@@ -6,13 +7,30 @@ from restock.utils.utils import get_stock_price, ErrorResponse
 
 transactions = Blueprint('transactions', __name__)
 
-@transactions.route('/tracking', methods=['GET'])
-def get_tracked_stocks():
-    aggr = StockAggregate.query.all()
-    serialized_aggr = [a.to_dict() for a in aggr]
+def update_all_stocks():
+    aggregates = StockAggregate.query.all()
 
-    return jsonify(serialized_aggr), 200
+    for symbol in aggregates:
+        new_price = get_stock_price(symbol.symbol)
+        if new_price and new_price != symbol.current_price:
+            print('Updating', symbol.symbol, 'from', symbol.current_price, 'to', new_price)
+            symbol.update_price(new_price)
+            db.session.commit()
 
+    return aggregates
+
+@transactions.route('/aggregate', methods=['GET'])
+def update_all_aggregate_stocks():
+    aggregates = update_all_stocks()
+    serialized_aggregates = [a.to_dict() for a in aggregates]
+    return jsonify(serialized_aggregates), 200
+
+@transactions.route('/poll', methods=['GET'])
+def long_polling():
+    print('Starting polling')
+    while True:
+        time.sleep(120)
+        update_all_stocks()
 
 @transactions.route('/', methods=['POST'])
 def create_new_transaction():
@@ -47,8 +65,7 @@ def create_new_transaction():
 
     return ErrorResponse('Authentication', 'Provide an authentication token.').to_json(), 401
 
-@transactions.route('/<int:id>', methods=['GET'])
-def get_transaction_by_id(id):
+def update_by_id(id):
     transaction = StockPurchase.query.get(id)
 
     if transaction:
@@ -59,7 +76,28 @@ def get_transaction_by_id(id):
             aggr.update_price(new_price)
             db.session.commit()
 
-            return jsonify(transaction.to_dict()), 200
+            return transaction
+
+    return None
+
+@transactions.route('/<int:id>', methods=['GET'])
+def get_transaction_by_id(id):
+    transaction = update_by_id(id)
+
+    if transaction:
+        return jsonify(transaction.to_dict()), 200
+
+    return ErrorResponse('Not Found',
+                         'No transaction with ID {} exists.'.format(id)).to_json(), 404
+
+@transactions.route('/<int:id>', methods=['DELETE'])
+def delete_transaction_by_id(id):
+    transaction = update_by_id(id)
+
+    if transaction:
+        db.session.delete(transaction)
+        db.session.commit()
+        return jsonify({}), 204
 
     return ErrorResponse('Not Found',
                          'No transaction with ID {} exists.'.format(id)).to_json(), 404
