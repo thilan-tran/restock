@@ -1,21 +1,28 @@
 import json
 from socketIO_client_nexus import SocketIO, BaseNamespace
 
-WS_url='https://ws-api.iextrading.com'
+IEX_URL = 'https://ws-api.iextrading.com'
+IEX_NAMESPACE = '/1.0/tops'
 
-class Namespace(BaseNamespace):
+def init_websocket_client(subscriptions, url=IEX_URL, namespace=IEX_NAMESPACE,
+                          handle_connect=print, handle_message=print):
 
-    def on_connect(self):
-        print('connected')
+    class Namespace(BaseNamespace):
 
-    def on_reconnect(self):
-        print('reconnected')
+        def on_connect(self, *data):
+            handle_connect(data)
 
-    def on_message(self, data):
-        loaded = json.loads(data)
-        print(loaded['symbol'], loaded['askPrice'])
+        # def on_reconnect(self):
+        #     print('reconnected')
 
-sio = SocketIO(WS_url)
-tops = sio.define(Namespace, '/1.0/tops')
-tops.emit('subscribe', 'ge')
-sio.wait()
+        def on_message(self, data):
+            loaded = json.loads(data)
+            handle_message(data)
+
+    sio = SocketIO(url)
+    tops = sio.define(Namespace, namespace)
+    tops.emit('subscribe', subscriptions)
+    sio.wait()
+
+if __name__ == '__main__':
+    init_websocket_client(subscriptions='aapl')

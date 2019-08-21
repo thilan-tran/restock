@@ -1,10 +1,17 @@
+import time
 from flask import Flask
 from flask_bcrypt import Bcrypt
 from flask_sqlalchemy import SQLAlchemy
+from flask_socketio import SocketIO, emit
 from restock.config import Config
 
 bcrypt = Bcrypt()
 db = SQLAlchemy()
+socketio = SocketIO()
+
+@socketio.on('connect')
+def on_test():
+    emit('message', 'you are connected')
 
 def create_app(config=Config):
     app = Flask(__name__)
@@ -16,6 +23,7 @@ def create_app(config=Config):
         print('Successfully connected to database.')
     except:
         print('Failed to connect to database.')
+    socketio.init_app(app)
 
     from restock.controllers.users import users
     from restock.controllers.auth import auth

@@ -16,21 +16,31 @@ def update_all_stocks():
             print('Updating', symbol.symbol, 'from', symbol.current_price, 'to', new_price)
             symbol.update_price(new_price)
             db.session.commit()
+        else:
+            print('No change in', symbol.symbol)
 
     return aggregates
+
+def update_by_id(id):
+    transaction = StockPurchase.query.get(id)
+
+    if transaction:
+        new_price = get_stock_price(transaction.symbol)
+        if new_price:
+            aggr = StockAggregate.query.filter_by(symbol=transaction.symbol).first()
+
+            aggr.update_price(new_price)
+            db.session.commit()
+
+            return transaction
+
+    return None
 
 @transactions.route('/aggregate', methods=['GET'])
 def update_all_aggregate_stocks():
     aggregates = update_all_stocks()
     serialized_aggregates = [a.to_dict() for a in aggregates]
     return jsonify(serialized_aggregates), 200
-
-@transactions.route('/poll', methods=['GET'])
-def long_polling():
-    print('Starting polling')
-    while True:
-        time.sleep(120)
-        update_all_stocks()
 
 @transactions.route('/', methods=['POST'])
 def create_new_transaction():
@@ -64,21 +74,6 @@ def create_new_transaction():
         return ErrorResponse('Not Found', 'No such stock with symbol {}.'.format(body['symbol'])).to_json(), 404
 
     return ErrorResponse('Authentication', 'Provide an authentication token.').to_json(), 401
-
-def update_by_id(id):
-    transaction = StockPurchase.query.get(id)
-
-    if transaction:
-        new_price = get_stock_price(transaction.symbol)
-        if new_price:
-            aggr = StockAggregate.query.filter_by(symbol=transaction.symbol).first()
-
-            aggr.update_price(new_price)
-            db.session.commit()
-
-            return transaction
-
-    return None
 
 @transactions.route('/<int:id>', methods=['GET'])
 def get_transaction_by_id(id):
