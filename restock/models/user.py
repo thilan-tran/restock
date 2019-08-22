@@ -21,6 +21,7 @@ class User(db.Model):
         self.date_registered = datetime.datetime.now()
         balance_hist = LatestRecords(self.balance, self)
         balance_hist = HourlyRecords(self.balance, self)
+        balance_hist = DailyRecords(self.balance, self)
         balance_hist = WeeklyRecords(self.balance, self)
         balance_hist = MonthlyRecords(self.balance, self)
 
@@ -36,6 +37,7 @@ class User(db.Model):
             'records': {
                 'latest_records': self.serialize_relationship('latest_records'),
                 'hourly_records': self.serialize_relationship('hourly_records'),
+                'daily_records': self.serialize_relationship('daily_records'),
                 'weekly_records': self.serialize_relationship('weekly_records'),
                 'monthly_records': self.serialize_relationship('monthly_records')
             },
@@ -94,6 +96,10 @@ class HourlyRecords(BalanceMixin, db.Model):
 
     user = db.relationship(User, backref=db.backref('hourly_records'))
 
+class DailyRecords(BalanceMixin, db.Model):
+
+    user = db.relationship(User, backref=db.backref('daily_records'))
+
 class WeeklyRecords(BalanceMixin, db.Model):
 
     user = db.relationship(User, backref=db.backref('weekly_records'))
@@ -105,11 +111,11 @@ class MonthlyRecords(BalanceMixin, db.Model):
 def update_and_limit_record(Record, new_balance, user):
     new_record = Record(new_balance, user)
     count = Record.query.filter_by(user=user).count()
-    print('Record Count:', count)
+    # print('Record Count:', count)
 
     while count > Config.MAX_RECORDS:
-        to_delete = Record.query.first()
-        print('Deleting:', to_delete)
+        to_delete = Record.query.filter_by(user=user).first()
+        # print('Deleting:', to_delete)
         db.session.delete(to_delete)
         count = Record.query.filter_by(user=user).count()
 
@@ -123,8 +129,13 @@ def update_records(new_balance, user):
     if time_diff.seconds > 3600:
         update_and_limit_record(HourlyRecords, new_balance, user)
 
-    if new_record.timestamp.weekday() == 0:
+    # if new_record.timestamp.weekday() == 0:
+    if time_diff.seconds > 24 * 3600:
+        update_and_limit_record(DailyRecords, new_balance, user)
+
+    if time_diff.seconds > 7 * 24 * 3600:
         update_and_limit_record(WeeklyRecords, new_balance, user)
 
-    if new_record.timestamp.day == 1:
+    # if new_record.timestamp.day == 1:
+    if time_diff.seconds > 4 * 7 * 24 * 3600:
         update_and_limit_record(MonthlyRecords, new_balance, user)

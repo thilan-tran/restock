@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify
 from restock.models.user import User
 from restock.models.stock import StockPurchase
-from restock.utils.utils import ErrorResponse
+from restock.utils.errors import ErrorResponse
 
 users = Blueprint('users', __name__)
 

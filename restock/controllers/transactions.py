@@ -1,44 +1,19 @@
 import time
 from flask import Blueprint, jsonify, request
-from restock import db
+from sqlalchemy import func
+from restock import db, socketio
 from restock.models.user import User
 from restock.models.stock import StockPurchase, StockAggregate
-from restock.utils.utils import get_stock_price, ErrorResponse
+from restock.utils.stocks import get_stock_price
+from restock.utils.database import update_by_id, update_all_stocks
+from restock.utils.errors import ErrorResponse
 
 transactions = Blueprint('transactions', __name__)
 
-def update_all_stocks():
-    aggregates = StockAggregate.query.all()
-
-    for symbol in aggregates:
-        new_price = get_stock_price(symbol.symbol)
-        if new_price and new_price != symbol.current_price:
-            print('Updating', symbol.symbol, 'from', symbol.current_price, 'to', new_price)
-            symbol.update_price(new_price)
-            db.session.commit()
-        else:
-            print('No change in', symbol.symbol)
-
-    return aggregates
-
-def update_by_id(id):
-    transaction = StockPurchase.query.get(id)
-
-    if transaction:
-        new_price = get_stock_price(transaction.symbol)
-        if new_price:
-            aggr = StockAggregate.query.filter_by(symbol=transaction.symbol).first()
-
-            aggr.update_price(new_price)
-            db.session.commit()
-
-            return transaction
-
-    return None
-
 @transactions.route('/aggregate', methods=['GET'])
 def update_all_aggregate_stocks():
-    aggregates = update_all_stocks()
+    # aggregates = update_all_stocks()
+    aggregates = StockAggregate.query.all()
     serialized_aggregates = [a.to_dict() for a in aggregates]
     return jsonify(serialized_aggregates), 200
 
@@ -77,7 +52,8 @@ def create_new_transaction():
 
 @transactions.route('/<int:id>', methods=['GET'])
 def get_transaction_by_id(id):
-    transaction = update_by_id(id)
+    # transaction = update_by_id(id)
+    transaction = StockPurchase.query.get(id)
 
     if transaction:
         return jsonify(transaction.to_dict()), 200
@@ -87,12 +63,34 @@ def get_transaction_by_id(id):
 
 @transactions.route('/<int:id>', methods=['DELETE'])
 def delete_transaction_by_id(id):
-    transaction = update_by_id(id)
+    auth_header = request.headers.get('Authorization')
+    if auth_header:
+        try:
+            token = auth_header.split(' ')[1]
+        except IndexError:
+            return ErrorResponse('Authentication', 'Bearer token malformatted.').to_json(), 401
+    else:
+        token = ''
 
-    if transaction:
-        db.session.delete(transaction)
-        db.session.commit()
-        return jsonify({}), 204
+    if token:
+        user_id = User.decode_auth_token(token)
+        # transaction = update_by_id(id)
+        transaction = StockPurchase.query.get(id)
 
-    return ErrorResponse('Not Found',
-                         'No transaction with ID {} exists.'.format(id)).to_json(), 404
+        if transaction:
+            if transaction.user.id == user_id:
+                db.session.delete(transaction)
+                aggregate = StockAggregate.query.filter_by(symbol=transaction.symbol).first()
+                if len(aggregate.purchases) == 0:
+                    print('Clearing aggregate', aggregate.symbol)
+                    db.session.delete(aggregate)
+                db.session.commit()
+                return jsonify({}), 204
+
+            return ErrorResponse('Authentication',
+                                 'Not authenticated to delete other purchases.').to_json(), 401
+
+        return ErrorResponse('Not Found',
+                             'No transaction with ID {} exists.'.format(id)).to_json(), 404
+
+    return ErrorResponse('Authentication', 'Provide an authentication token.').to_json(), 401

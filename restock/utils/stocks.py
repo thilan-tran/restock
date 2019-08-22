@@ -1,18 +1,5 @@
 import requests
-from flask import jsonify
 from restock.config import Config
-
-class ErrorResponse:
-
-    def __init__(self, type, msg=''):
-        self.type = type
-        self.msg = msg
-
-    def to_dict(self):
-        return { 'error': { 'type': self.type, 'message': self.msg } }
-
-    def to_json(self):
-        return jsonify(self.to_dict())
 
 fmp_url = 'https://financialmodelingprep.com/api/v3/stock/'
 iex_url = 'https://api.iextrading.com/1.0/tops?symbols='

@@ -1,5 +1,6 @@
 from flask import Blueprint, jsonify
-from restock.utils.utils import fmp_stocks_overview, av_stocks_by_symbol, ErrorResponse
+from restock.utils.stocks import fmp_stocks_overview, av_stocks_by_symbol
+from restock.utils.errors import ErrorResponse
 from restock.config import Config
 
 stocks = Blueprint('stocks', __name__)

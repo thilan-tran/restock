@@ -10,8 +10,8 @@ db = SQLAlchemy()
 socketio = SocketIO()
 
 @socketio.on('connect')
-def on_test():
-    emit('message', 'you are connected')
+def on_connect():
+    emit('message', 'connection succesful')
 
 def create_app(config=Config):
     app = Flask(__name__)

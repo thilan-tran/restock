@@ -1,7 +1,7 @@
 from flask import Blueprint
 import jwt
 from sqlalchemy.exc import IntegrityError
-from restock.utils.utils import ErrorResponse
+from restock.utils.errors import ErrorResponse
 
 errors = Blueprint('errors', __name__)
 

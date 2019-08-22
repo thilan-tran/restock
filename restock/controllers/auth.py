@@ -3,7 +3,7 @@ from sqlalchemy.exc import IntegrityError
 from restock import db, bcrypt
 from restock.models.user import User
 from restock.models.stock import StockPurchase
-from restock.utils.utils import ErrorResponse
+from restock.utils.errors import ErrorResponse
 
 auth = Blueprint('authentication', __name__)
 
