@@ -124,18 +124,24 @@ def update_and_limit_record(Record, new_balance, user):
 def update_records(new_balance, user):
     new_record = update_and_limit_record(LatestRecords, new_balance, user)
 
-    last_record = HourlyRecords.query.order_by(HourlyRecords.id.desc()).first()
+    last_record = HourlyRecords.query.filter_by(user=user).order_by(HourlyRecords.id.desc()).first()
     time_diff = new_record.timestamp - last_record.timestamp
-    if time_diff.seconds > 3600:
+    if time_diff.days >= 1 or time_diff.seconds >= 3600:
         update_and_limit_record(HourlyRecords, new_balance, user)
 
     # if new_record.timestamp.weekday() == 0:
-    if time_diff.seconds > 24 * 3600:
+    last_record = DailyRecords.query.filter_by(user=user).order_by(DailyRecords.id.desc()).first()
+    time_diff = new_record.timestamp - last_record.timestamp
+    if time_diff.days >= 1:
         update_and_limit_record(DailyRecords, new_balance, user)
 
-    if time_diff.seconds > 7 * 24 * 3600:
+    last_record = WeeklyRecords.query.filter_by(user=user).order_by(WeeklyRecords.id.desc()).first()
+    time_diff = new_record.timestamp - last_record.timestamp
+    if time_diff.days >= 7:
         update_and_limit_record(WeeklyRecords, new_balance, user)
 
     # if new_record.timestamp.day == 1:
-    if time_diff.seconds > 4 * 7 * 24 * 3600:
+    last_record = MonthlyRecords.query.filter_by(user=user).order_by(MonthlyRecords.id.desc()).first()
+    time_diff = new_record.timestamp - last_record.timestamp
+    if time_diff.days >= 28:
         update_and_limit_record(MonthlyRecords, new_balance, user)
