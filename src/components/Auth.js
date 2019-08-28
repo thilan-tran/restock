@@ -1,17 +1,27 @@
 import React from 'react';
-import { useField } from '../hooks/hooks';
+import { connect } from 'react-redux';
+import { withRouter } from 'react-router';
 
-export const Login = () => {
+import { useField } from '../hooks/hooks';
+import { login, logout, register } from '../actions/auth';
+
+const BaseLogin = (props) => {
   const username = useField('text');
   const password = useField('password');
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log(username.value, email.value, password.value);
+    props.login({
+      username: username.value,
+      password: password.value
+    });
+    props.history.push('/');
   };
 
   return (
     <form onSubmit={handleSubmit}>
+      <p>{props.auth.token}</p>
+      <p>{props.auth.userId}</p>
       <h2>Login</h2>
       <div>
         Username:
@@ -26,14 +36,37 @@ export const Login = () => {
   );
 };
 
-export const Register = () => {
+const mapStateToProps = (state) => ({ auth: state.auth });
+
+const mapDispatchToProps = { login, logout, register };
+
+export const Login = withRouter(
+  connect(
+    mapStateToProps,
+    mapDispatchToProps
+  )(BaseLogin)
+);
+
+const BaseLogout = (props) => <button onClick={props.logout}>logout</button>;
+
+export const Logout = connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(BaseLogout);
+
+const BaseRegister = (props) => {
   const username = useField('text');
   const email = useField('text');
   const password = useField('password');
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log(username.value, email.value, password.value);
+    props.register({
+      username: username.value,
+      email: email.value,
+      password: password.value
+    });
+    props.history.push('/login');
   };
 
   return (
@@ -55,3 +88,10 @@ export const Register = () => {
     </form>
   );
 };
+
+export const Register = withRouter(
+  connect(
+    mapStateToProps,
+    mapDispatchToProps
+  )(BaseRegister)
+);

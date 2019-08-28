@@ -1,24 +1,25 @@
 import time
 from flask import Blueprint, jsonify, request
 from sqlalchemy import func
+
 from restock import db, socketio
 from restock.models.user import User
-from restock.models.stock import StockPurchase, StockAggregate
+from restock.models.stock import StockTransaction, StockAggregate, StockAsset
 from restock.utils.stocks import get_stock_price
-from restock.utils.database import update_by_id, update_all_stocks
 from restock.utils.errors import ErrorResponse
 
 transactions = Blueprint('transactions', __name__)
 
+
 @transactions.route('/aggregate', methods=['GET'])
 def update_all_aggregate_stocks():
-    # aggregates = update_all_stocks()
     aggregates = StockAggregate.query.all()
     serialized_aggregates = [a.to_dict() for a in aggregates]
     return jsonify(serialized_aggregates), 200
 
+
 @transactions.route('/', methods=['POST'])
-def create_new_transaction():
+def buy_stock_asset():
     auth_header = request.headers.get('Authorization')
     if auth_header:
         try:
@@ -32,37 +33,30 @@ def create_new_transaction():
         id = User.decode_auth_token(token)
         user = User.query.get(id)
         body = request.json
+        symbol, shares, short = body['symbol'], body['shares'], body['short']
 
-        symbol = body['symbol']
-        buy_price = get_stock_price(symbol)
-        if buy_price:
+        asset = StockAsset.query.filter_by(symbol=symbol, user=user, is_short=short).first()
+        if not asset:
             aggr = StockAggregate.query.filter_by(symbol=symbol).first()
+
             if not aggr:
-                aggr = StockAggregate(symbol, buy_price)
+                buy_price = get_stock_price(symbol)
+                if buy_price:
+                    aggr = StockAggregate(symbol, buy_price)
+                else:
+                    return ErrorResponse('Not Found', 'No such stock with symbol {}.'.format(symbol)).to_json(), 404
 
-            purchase = StockPurchase(symbol=symbol, shares=body['shares'], short=body['short'],
-                                     buy_price=buy_price, user=user, aggregate=aggr)
-            db.session.commit()
+            asset = StockAsset(user=user, aggregate=aggr, short=short)
 
-            return jsonify(purchase.to_dict()), 200
-
-        return ErrorResponse('Not Found', 'No such stock with symbol {}.'.format(body['symbol'])).to_json(), 404
+        purchase = StockTransaction(shares=shares, asset=asset, purchase=True)
+        db.session.commit()
+        return jsonify(purchase.to_dict()), 200
 
     return ErrorResponse('Authentication', 'Provide an authentication token.').to_json(), 401
 
-@transactions.route('/<int:id>', methods=['GET'])
-def get_transaction_by_id(id):
-    # transaction = update_by_id(id)
-    transaction = StockPurchase.query.get(id)
 
-    if transaction:
-        return jsonify(transaction.to_dict()), 200
-
-    return ErrorResponse('Not Found',
-                         'No transaction with ID {} exists.'.format(id)).to_json(), 404
-
-@transactions.route('/<int:id>', methods=['DELETE'])
-def delete_transaction_by_id(id):
+@transactions.route('/', methods=['DELETE'])
+def sell_stock_asset():
     auth_header = request.headers.get('Authorization')
     if auth_header:
         try:
@@ -73,24 +67,34 @@ def delete_transaction_by_id(id):
         token = ''
 
     if token:
-        user_id = User.decode_auth_token(token)
-        # transaction = update_by_id(id)
-        transaction = StockPurchase.query.get(id)
+        id = User.decode_auth_token(token)
+        user = User.query.get(id)
+        body = request.json
+        symbol, shares, short = body['symbol'], body['shares'], body['short']
 
-        if transaction:
-            if transaction.user.id == user_id:
-                db.session.delete(transaction)
-                aggregate = StockAggregate.query.filter_by(symbol=transaction.symbol).first()
-                if len(aggregate.purchases) == 0:
-                    print('Clearing aggregate', aggregate.symbol)
-                    db.session.delete(aggregate)
-                db.session.commit()
-                return jsonify({}), 204
+        asset = StockAsset.query.filter_by(symbol=symbol, user=user, is_short=short).first()
+        if not asset:
+            return ErrorResponse('Not Found',
+                                 'No such {} assets to sell of {}.'
+                                 .format('short' if short else 'stock', symbol)).to_json(), 404
 
-            return ErrorResponse('Authentication',
-                                 'Not authenticated to delete other purchases.').to_json(), 401
+        transaction = StockTransaction(shares=shares, asset=asset, purchase=False)
 
-        return ErrorResponse('Not Found',
-                             'No transaction with ID {} exists.'.format(id)).to_json(), 404
+        if asset.shares == 0:
+            db.session.delete(asset)
+        if not asset.aggregate.assets and not asset.aggregate.tracking:
+            db.session.delete(asset.aggregate)
+        db.session.commit()
+
+        return jsonify(transaction.to_dict()), 200
 
     return ErrorResponse('Authentication', 'Provide an authentication token.').to_json(), 401
+
+
+@transactions.route('/<int:id>', methods=['GET'])
+def get_transaction_by_id(id):
+    transaction = StockTransaction.query.get(id)
+    if transaction:
+        return jsonify(transaction.to_dict()), 200
+    return ErrorResponse('Not Found',
+                         'No transaction with ID {} exists.'.format(id)).to_json(), 404

@@ -8,4 +8,4 @@ const register = (creds) =>
 const login = (creds) =>
   axios.post(baseUrl + '/login', creds).then((res) => res.data);
 
-export default { login };
+export default { login, register };

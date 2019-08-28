@@ -1,15 +1,19 @@
 import requests
+
 from restock.config import Config
 
 fmp_url = 'https://financialmodelingprep.com/api/v3/stock/'
 iex_url = 'https://api.iextrading.com/1.0/tops?symbols='
+iex_last_url = 'https://api.iextrading.com/1.0/tops/last?symbols='
 av_url = \
     'https://www.alphavantage.co/query?function={{function}}&symbol={{symbol}}&apikey={apikey}' \
     .format(apikey=Config.API_KEY)
 
+
 def price_to_float(d):
     d['price'] = float(d['price'])
     return d
+
 
 def fmp_stocks_overview():
     actives = requests.get(fmp_url + 'actives').json()
@@ -22,10 +26,16 @@ def fmp_stocks_overview():
         'most_lost': [ price_to_float(l) for l in losers['mostLoserStock'] ]
     }
 
+
 def get_stock_price(symbol):
     iex = iex_stocks_by_symbol(symbol)
-    if iex and iex['askPrice'] != 0:
-        return iex['askPrice']
+    if iex:
+        if iex.get('askPrice'):
+            return iex.get('askPrice')
+        if iex.get('lastSalePrice'):
+            return iex.get('lastSalePrice')
+        if iex.get('price'):
+            return iex.get('price')
 
     av = av_stocks_by_symbol(symbol)
     if av:
@@ -33,11 +43,18 @@ def get_stock_price(symbol):
 
     return None
 
+
 def iex_stocks_by_symbol(symbol):
-    data = requests.get(iex_url + symbol).json()
-    if data:
-        return data[0]
+    tops = requests.get(iex_url + symbol).json()
+    if tops:
+        return tops[0]
+
+    last = requests.get(iex_last_url+symbol).json()
+    if last:
+        return last[0]
+
     return None
+
 
 def av_stocks_by_symbol(symbol):
     intraday_params = {

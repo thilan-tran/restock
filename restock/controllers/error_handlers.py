@@ -5,15 +5,18 @@ from restock.utils.errors import ErrorResponse
 
 errors = Blueprint('errors', __name__)
 
+
 @errors.app_errorhandler(jwt.ExpiredSignatureError)
 def handle_expired_token(err):
     print('ExpiredSignatureError:', err)
     return ErrorResponse('Authentication', 'Token signature expired.').to_json(), 401
 
+
 @errors.app_errorhandler(jwt.InvalidTokenError)
 def handle_expired_token(err):
     print('InvalidTokenError:', err)
     return ErrorResponse('Authentication', 'Invalid token.').to_json(), 401
+
 
 @errors.app_errorhandler(AssertionError)
 def handle_invalid_funds(err):
@@ -21,12 +24,16 @@ def handle_invalid_funds(err):
 
     if 'Invalid funds' in str(err):
         return ErrorResponse('Balance',
-                             'Not enough funds in user balance for transaction.').to_json(), 200
+                             'Not enough funds in user balance for transaction.').to_json(), 400
     if 'Invalid shares' in str(err):
         return ErrorResponse('Input Type',
-                             'Number of shares must be an integer.').to_json(), 400
+                             'Number of shares must be a nonzero integer.').to_json(), 400
+    if 'Not enough shares' in str(err):
+        return ErrorResponse('Shares',
+                             'Not enough shares in stock to sell.').to_json(), 400
 
     return ErrorResponse('Server', 'Server error.').to_json(), 500
+
 
 @errors.app_errorhandler(IntegrityError)
 def handle_integrity_error(err):
@@ -43,6 +50,7 @@ def handle_integrity_error(err):
 
     return error_res.to_json(), 400
 
+
 @errors.app_errorhandler(KeyError)
 def handle_key_error(err):
     print('KeyError:', err)
@@ -53,6 +61,7 @@ def handle_key_error(err):
         error_res.msg = 'No {} field provided.'.format(err.args[0])
 
     return error_res.to_json(), 400
+
 
 @errors.app_errorhandler(404)
 def handle_404(err):
