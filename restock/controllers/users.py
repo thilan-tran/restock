@@ -15,7 +15,7 @@ def get_all_users():
 
 @users.route('/leaderboard', methods=['GET'])
 def get_top_users():
-    users = User.query.order_by(User.worth.desc()).limit(10).all()
+    users = User.query.order_by(User.worth.desc()).limit(100).all()
     serialized_users = [u.to_dict() for u in users]
     return jsonify(serialized_users), 200
 

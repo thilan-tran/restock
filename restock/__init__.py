@@ -1,4 +1,5 @@
 import time
+import json
 from flask import Flask
 from flask_bcrypt import Bcrypt
 from flask_cors  import CORS
@@ -28,6 +29,21 @@ def on_subscribe(user_id):
 def on_unsubscribe(user_id):
     emit('message', 'unsubscribing from user ' + str(user_id))
     leave_room(user_id)
+
+# from restock.models.stock import TrackedStock
+
+@socketio.on('track')
+def on_subscribe(symbol):
+    emit('message', 'subscribing to symbol ' + symbol)
+    join_room(symbol)
+    # tracked = TrackedStock.query.filter_by(symbol=symbol).first()
+    # emit('init_tracking', json.dumps(tracked.to_dict()), room=symbol)
+
+
+@socketio.on('untrack')
+def on_unsubscribe(symbol):
+    emit('message', 'unsubscribing from symbol ' + symbol)
+    leave_room(symbol)
 
 
 def create_app(config=Config):

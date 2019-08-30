@@ -1,16 +1,23 @@
 import axios from 'axios';
+import React from 'react';
+import { notification, Icon } from 'antd';
 
 const userUrl = '/api/users/';
 const transactUrl = '/api/transactions/';
-const trackingUrl = '/api/tracking/';
 
 export const initLeaderboard = () => {
-  return async (dispatch) => {
+  return async (dispatch, getState, socket) => {
     const res = await axios.get(userUrl + 'leaderboard');
-    console.log(res.data);
+    res.data.forEach((user) => {
+      socket.emit('subscribe', user.id);
+      dispatch({
+        type: 'FORCE_ADD_SUBSCRIBED',
+        user: user
+      });
+    });
     dispatch({
       type: 'SET_LEADERBOARD',
-      users: res.data
+      users: res.data.map((elem) => elem.id)
     });
   };
 };
@@ -25,9 +32,9 @@ export const setLeaderboard = (users) => {
 };
 
 export const addSubscribed = (id) => {
-  return async (dispatch) => {
+  return async (dispatch, getState, socket) => {
+    socket.emit('subscribe', id);
     const res = await axios.get(userUrl + id);
-    console.log(res.data);
     dispatch({
       type: 'ADD_SUBSCRIBED',
       user: res.data
@@ -36,6 +43,12 @@ export const addSubscribed = (id) => {
 };
 
 export const updateSubscribed = (user) => {
+  notification.open({
+    message: 'User',
+    description: `${user.username} worth updated to $${user.worth}`,
+    icon: <Icon type="user" style={{ color: '#108ee9' }} />,
+    duration: 6
+  });
   return (dispatch) => {
     dispatch({
       type: 'UPDATE_SUBSCRIBED',
@@ -45,7 +58,8 @@ export const updateSubscribed = (user) => {
 };
 
 export const removeSubscribed = (id) => {
-  return (dispatch) => {
+  return (dispatch, getState, socket) => {
+    socket.emit('unsubscribe', id);
     dispatch({
       type: 'REMOVE_SUBSCRIBED',
       id
@@ -59,10 +73,10 @@ export const createTransaction = (transaction, token) => {
   };
   return async (dispatch) => {
     const res = await axios.post(transactUrl, transaction, config);
-    console.log(res.data);
     dispatch({
-      type: 'NEW_TRANSACTION',
-      transaction: res.data
+      type: 'OTHER'
+      // type: 'NEW_TRANSACTION',
+      // transaction: res.data
     });
   };
 };
@@ -75,20 +89,10 @@ export const removeTransaction = (id, user, token) => {
     const res = await axios.delete(transactUrl + id, config);
     console.log(res.data);
     dispatch({
-      type: 'DELETE_TRANSACTION',
-      id,
-      user
-    });
-  };
-};
-
-export const initAll = () => {
-  return async (dispatch) => {
-    const res = await axios.get(userUrl);
-    console.log(res.data);
-    dispatch({
-      type: 'INIT_USERS',
-      initState: res.data
+      type: 'OTHER'
+      // type: 'DELETE_TRANSACTION',
+      // id,
+      // user
     });
   };
 };
@@ -100,32 +104,4 @@ export const updateAll = (newState) => {
       newState
     });
   };
-};
-
-export const updateTransaction = (symbol, newPrice, id) => {
-  return (dispatch) => {
-    dispatch({
-      type: 'UPDATE_TRANSACTION',
-      data: {
-        symbol,
-        newPrice,
-        id
-      }
-    });
-  };
-};
-
-export const addTracking = async (symbol, token) => {
-  const config = {
-    headers: { Authorization: `bearer ${token}` }
-  };
-  const res = await axios.post(trackingUrl, { symbol }, config);
-  console.log(res.data);
-};
-
-export const removeTracking = async (symbol, token) => {
-  const config = {
-    headers: { Authorization: `bearer ${token}` }
-  };
-  await axios.delete(trackingUrl, { symbol }, config);
 };

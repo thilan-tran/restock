@@ -8,6 +8,7 @@ import { Provider } from 'react-redux';
 import App from './App';
 import usersReducer from './reducers/usersReducer';
 import { setLeaderboard, updateSubscribed } from './actions/users';
+import { initTracking, updateTracking } from './actions/tracking';
 
 const socket = socketIO.connect('http://localhost:3000');
 
@@ -25,16 +26,28 @@ socket.on('connect', () => {
 
 socket.on('message', (msg) => console.log(msg));
 
+socket.on('leaderboard', (data) => {
+  const userIds = JSON.parse(data);
+  console.log(userIds);
+  store.dispatch(setLeaderboard(userIds));
+});
+
 socket.on('update', (data) => {
   const user = JSON.parse(data);
   console.log(user);
   store.dispatch(updateSubscribed(user));
 });
 
-socket.on('leaderboard', (data) => {
-  const users = JSON.parse(data);
-  console.log(users);
-  store.dispatch(setLeaderboard(users));
+// socket.on('init_tracking', (data) => {
+//   const tracking = JSON.parse(data);
+//   console.log(tracking);
+//   store.dispatch(initTracking(tracking));
+// });
+
+socket.on('update_tracking', (data) => {
+  const tracking = JSON.parse(data);
+  console.log(tracking);
+  store.dispatch(updateTracking(tracking.symbol, tracking.price));
 });
 
 ReactDOM.render(

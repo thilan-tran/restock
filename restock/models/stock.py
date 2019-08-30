@@ -8,13 +8,19 @@ class StockAggregate(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     symbol = db.Column(db.String(10), unique=False, nullable=False)
+    company = db.Column(db.String(255), unique=False, nullable=True)
+    prev_price = db.Column(db.Float, nullable=False)
     current_price = db.Column(db.Float, nullable=False)
+    prev_timestamp = db.Column(db.DateTime, nullable=False)
     timestamp = db.Column(db.DateTime, nullable=False)
 
-    def __init__(self, symbol, price):
+    def __init__(self, symbol, company, price, prev_price=None):
         self.symbol = symbol
+        self.company = company
         self.current_price = price
+        self.prev_price = prev_price if prev_price else self.current_price
         self.timestamp = datetime.datetime.now()
+        self.prev_timestamp = self.timestamp
 
     def __repr__(self):
         return \
@@ -24,19 +30,30 @@ class StockAggregate(db.Model):
     def to_dict(self):
         return {
             'symbol': self.symbol,
+            'company': self.company,
+            'prev_price': self.prev_price,
             'current_price': self.current_price,
             'timestamp': '{:%Y-%m-%d %H:%M}'.format(self.timestamp),
+            'prev_timestamp': '{:%Y-%m-%d %H:%M}'.format(self.prev_timestamp),
             'assets': [ asset.to_dict() for asset in self.assets ],
             'tracking': [ tracked.to_dict() for tracked in self.tracking ],
             'id': self.id
         }
 
     def update_price(self, new_price):
+        timestamp = datetime.datetime.now()
+        time_diff = timestamp - self.prev_timestamp
+        if time_diff.days >= 1:
+            self.prev_price = current_price
+            self.prev_timestamp = timestamp
+
+        change = new_price - self.current_price
+        print(self.symbol, 'changed by', change)
         self.current_price = new_price
         rel = getattr(self, 'assets', None)
         if rel:
             for r in rel:
-                r.update_price(new_price)
+                r.update_price(change)
 
 
 class StockAsset(db.Model):
@@ -44,11 +61,8 @@ class StockAsset(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     symbol = db.Column(db.String(10), unique=False, nullable=False)
     init_price = db.Column(db.Float, nullable=False)
-    prev_price = db.Column(db.Float, nullable=False)
-    current_price = db.Column(db.Float, nullable=False)
     shares = db.Column(db.Integer, nullable=False)
     is_short = db.Column(db.Boolean, nullable=False)
-    prev_timestamp = db.Column(db.DateTime, nullable=False)
     timestamp = db.Column(db.DateTime, nullable=False)
 
     user_id = db.Column(db.Integer, db.ForeignKey(User.id), nullable=False)
@@ -60,14 +74,11 @@ class StockAsset(db.Model):
     def __init__(self, user, aggregate, short=False):
         self.symbol = aggregate.symbol
         self.init_price = aggregate.current_price
-        self.prev_price = self.init_price
-        self.current_price = self.init_price
         self.shares = 0
         self.is_short = short
         self.user = user
         self.aggregate = aggregate
         self.timestamp = datetime.datetime.now()
-        self.prev_timestamp = self.timestamp
 
     def clean_up(self):
         print(self.shares*self.current_price, 'to balance of', self.user.balance)
@@ -82,40 +93,49 @@ class StockAsset(db.Model):
     def to_dict(self):
         return {
             'symbol': self.symbol,
+            'company': self.aggregate.company,
             'init_price': self.init_price,
-            'prev_price': self.prev_price,
-            'current_price': self.current_price,
+            'prev_price': self.aggregate.prev_price,
+            'current_price': self.aggregate.current_price,
             'shares': self.shares,
             'short': self.is_short,
             'user': self.user.username,
             'timestamp': '{:%Y-%m-%d %H:%M}'.format(self.timestamp),
+            'prev_timestamp': '{:%Y-%m-%d %H:%M}'.format(self.aggregate.prev_timestamp),
             'id': self.id
         }
 
     def add_shares(self, num_shares):
-        print(num_shares*self.current_price, 'from balance of', self.user.balance)
+        change = num_shares * self.aggregate.current_price
+
+        print(change, 'from balance of', self.user.balance)
         self.shares += num_shares
-        update_balance_records(self.user.balance - num_shares*self.current_price, self.user)
+        update_balance_records(self.user.balance - change, self.user)
 
     def sell_shares(self, num_shares):
-        print(num_shares*self.current_price, 'to balance of', self.user.balance)
-        self.shares -= num_shares
-        update_balance_records(self.user.balance + num_shares*self.current_price, self.user)
+        change = num_shares * self.aggregate.current_price
+        if self.is_short:
+            change = num_shares * (2*self.init_price - self.aggregate.current_price)
 
-    def update_price(self, new_price):
-        change = self.shares * (new_price - self.current_price)
+        print(change, 'to balance of', self.user.balance)
+        self.shares -= num_shares
+        update_balance_records(self.user.balance + change, self.user)
+
+    def update_price(self, change):
+        # change = self.shares * (new_price - self.aggregate.current_price)
+        change *= self.shares
         change = -1 * change if self.is_short else change
         print(self.symbol, 'short asset' if self.is_short else 'stock asset', 'changed by', change)
 
         if change:
-            self.current_price = new_price
+            # self.current_price = new_price
             update_balance_records(self.user.balance, self.user)
 
-        timestamp = datetime.datetime.now()
-        time_diff = timestamp - self.prev_timestamp
-        if time_diff.days >= 1:
-            self.prev_price = new_price
-            self.prev_timestamp = timestamp
+        # timestamp = datetime.datetime.now()
+        # time_diff = timestamp - self.prev_timestamp
+        # if time_diff.days >= 1:
+        #     self.prev_price = new_price
+        #     self.prev_timestamp = timestamp
 
 
 class StockTransaction(db.Model):
@@ -136,7 +156,7 @@ class StockTransaction(db.Model):
 
     def __init__(self, shares, asset, purchase=True):
         self.symbol = asset.symbol
-        self.price = asset.current_price
+        self.price = asset.aggregate.current_price
         self.shares = shares
         self.is_short = asset.is_short
         self.is_purchase = purchase
@@ -157,6 +177,7 @@ class StockTransaction(db.Model):
     def to_dict(self):
         return {
             'symbol': self.symbol,
+            'company': self.asset.aggregate.company,
             'price': self.price,
             'shares': self.shares,
             'short': self.is_short,
@@ -193,7 +214,7 @@ class TrackedStock(db.Model):
     symbol = db.Column(db.String(10), unique=False, nullable=False)
     timestamp = db.Column(db.DateTime, nullable=False)
 
-    user_id = db.Column(db.Integer, db.ForeignKey(User.id), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey(User.id), nullable=True)
     user = db.relationship(User, backref=db.backref('tracking'))
 
     aggregate_id = db.Column(db.Integer, db.ForeignKey(StockAggregate.id), nullable=False)
@@ -213,6 +234,9 @@ class TrackedStock(db.Model):
     def to_dict(self):
         return {
             'symbol': self.symbol,
+            'company': self.aggregate.company,
+            'prev_price': self.aggregate.prev_price,
+            'price': self.aggregate.current_price,
             'user': self.user.username if self.user else 'None',
             'timestamp': '{:%Y-%m-%d %H:%M}'.format(self.timestamp),
             'id': self.id

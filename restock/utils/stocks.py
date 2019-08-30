@@ -1,13 +1,40 @@
 import requests
+import json
+import os
 
 from restock.config import Config
 
 fmp_url = 'https://financialmodelingprep.com/api/v3/stock/'
 iex_url = 'https://api.iextrading.com/1.0/tops?symbols='
 iex_last_url = 'https://api.iextrading.com/1.0/tops/last?symbols='
+iex_symbols = 'https://api.iextrading.com/1.0/ref-data/symbols'
 av_url = \
     'https://www.alphavantage.co/query?function={{function}}&symbol={{symbol}}&apikey={apikey}' \
     .format(apikey=Config.API_KEY)
+
+
+def get_company(symbol):
+    folder = os.path.dirname(os.path.abspath(__file__))
+    path = os.path.join(folder, 'symbol_data.json')
+
+    with open(path, 'r') as f:
+        ref_data = json.load(f)
+        for data in ref_data:
+            if data['symbol'].lower() == symbol.lower():
+                return data['name']
+    return None
+
+
+def get_symbol(search):
+    folder = os.path.dirname(os.path.abspath(__file__))
+    path = os.path.join(folder, 'symbol_data.json')
+
+    with open(path, 'r') as f:
+        ref_data = json.load(f)
+        for data in ref_data:
+            if search.lower() in data['name'].lower():
+                return data['symbol'].lower()
+    return None
 
 
 def price_to_float(d):

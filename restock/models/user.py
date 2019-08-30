@@ -141,7 +141,9 @@ def update_and_limit_record(Record, new_balance, new_worth, user):
 
 def update_balance_records(new_balance, user):
     user.balance = new_balance
-    new_worth = new_balance + sum([ asset.current_price*asset.shares for asset in user.portfolio ])
+    new_worth = new_balance + sum([ asset.aggregate.current_price * asset.shares if not asset.is_short else
+                                    asset.shares * (2*asset.init_price - asset.aggregate.current_price)
+                                    for asset in user.portfolio ])
     user.worth = new_worth
 
     new_record = update_and_limit_record(LatestRecord, new_balance, new_worth, user)

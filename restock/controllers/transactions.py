@@ -1,11 +1,12 @@
 import time
+import json
 from flask import Blueprint, jsonify, request
 from sqlalchemy import func
 
 from restock import db, socketio
 from restock.models.user import User
 from restock.models.stock import StockTransaction, StockAggregate, StockAsset
-from restock.utils.stocks import get_stock_price
+from restock.utils.stocks import get_stock_price, get_company
 from restock.utils.errors import ErrorResponse
 
 transactions = Blueprint('transactions', __name__)
@@ -42,7 +43,8 @@ def buy_stock_asset():
             if not aggr:
                 buy_price = get_stock_price(symbol)
                 if buy_price:
-                    aggr = StockAggregate(symbol, buy_price)
+                    company = get_company(symbol)
+                    aggr = StockAggregate(symbol, company, buy_price)
                 else:
                     return ErrorResponse('Not Found', 'No such stock with symbol {}.'.format(symbol)).to_json(), 404
 
@@ -50,6 +52,7 @@ def buy_stock_asset():
 
         purchase = StockTransaction(shares=shares, asset=asset, purchase=True)
         db.session.commit()
+        socketio.emit('update', json.dumps(purchase.user.to_dict()), room=purchase.user.id)
         return jsonify(purchase.to_dict()), 200
 
     return ErrorResponse('Authentication', 'Provide an authentication token.').to_json(), 401
