@@ -54,19 +54,19 @@ def fmp_stocks_overview():
     }
 
 
-def get_stock_price(symbol):
+def get_stock_detail(symbol):
     iex = iex_stocks_by_symbol(symbol)
     if iex:
         if iex.get('askPrice'):
-            return iex.get('askPrice')
+            return iex.get('askSize'), iex.get('askPrice')
         if iex.get('lastSalePrice'):
-            return iex.get('lastSalePrice')
+            return None, iex.get('lastSalePrice')
         if iex.get('price'):
-            return iex.get('price')
+            return iex.get('size'), iex.get('price')
 
-    av = av_stocks_by_symbol(symbol)
-    if av:
-        return av['quarter_hour_data'][0]['close']
+    # av = av_stocks_by_symbol(symbol)
+    # if av:
+    #     return av['quarter_hour_data'][0]['close']
 
     return None
 

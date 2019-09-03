@@ -10,14 +10,14 @@ import { Register, Login, Logout } from './components/Auth';
 
 import StockService from './services/StockService';
 import { initLeaderboard } from './actions/users';
-import { initOverview } from './actions/tracking';
+import { initOverview, addTracking } from './actions/tracking';
 
 const { Header, Content, Footer } = Layout;
 
 const App = (props) => {
   useEffect(() => {
     props.initLeaderboard();
-    props.initOverview();
+    // props.initOverview();
   }, []);
 
   return (
@@ -89,7 +89,7 @@ const mapStateToProps = (state) => ({
   tracking: state.tracking
 });
 
-const mapDispatchToProps = { initLeaderboard, initOverview };
+const mapDispatchToProps = { initLeaderboard, initOverview, addTracking };
 
 export default connect(
   mapStateToProps,

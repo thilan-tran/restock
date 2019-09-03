@@ -5,7 +5,8 @@ const initState = {
   },
   leaderboard: [],
   subscribed: [],
-  tracking: []
+  tracking: [],
+  overviewInitialized: false
 };
 
 const usersReducer = (state = initState, action) => {
@@ -71,6 +72,12 @@ const usersReducer = (state = initState, action) => {
         tracking: state.tracking.filter(
           (stock) => stock.symbol !== action.symbol
         )
+      };
+
+    case 'OVERVIEW_INIT':
+      return {
+        ...state,
+        overviewInitialized: true
       };
 
     // case 'NEW_TRANSACTION':

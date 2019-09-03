@@ -4,13 +4,13 @@ import datetime
 from restock import db, socketio
 from restock.models.stock import StockAggregate
 from restock.models.user import User
-from restock.utils.stocks import get_stock_price
+from restock.utils.stocks import get_stock_detail
 
 
 def update_all_stocks():
     aggregates = StockAggregate.query.all()
     for symbol in aggregates:
-        new_price = get_stock_price(symbol.symbol)
+        new_size, new_price = get_stock_detail(symbol.symbol)
 
         for tracked in symbol.tracking:
             if tracked.user == None and (datetime.datetime.now() - tracked.timestamp).seconds >= 60*60:
@@ -23,6 +23,10 @@ def update_all_stocks():
         if new_price and new_price != symbol.current_price:
             print(f'Updating {symbol.symbol} from {symbol.current_price} to {new_price}.')
             symbol.update_price(new_price)
+
+            if new_size and new_size != symbol.ask_size:
+                symbol.update_ask_size(new_size)
+
             db.session.commit()
 
             affected_users = list({ asset.user.id for asset in symbol.assets })
@@ -36,7 +40,7 @@ def update_all_stocks():
         else:
             print('No change in', symbol.symbol)
 
-    users = User.query.order_by(User.worth.desc()).limit(100).all()
+    users = User.query.order_by(User.value.desc()).limit(100).all()
     user_ids = [u.id for u in users]
     socketio.emit('leaderboard', json.dumps(user_ids))
 

@@ -13,6 +13,7 @@ import {
   Icon,
   Table,
   Tag,
+  Tooltip,
   Empty,
   Skeleton
 } from 'antd';
@@ -27,10 +28,16 @@ export const UserOverview = ({ user }) => {
   const [tab, setTab] = useState('overview');
 
   const dailyRecords = user.records.daily_records;
-  const latestWorth = dailyRecords[dailyRecords.length - 1].worth;
+  const latestValue = dailyRecords[dailyRecords.length - 1].value;
 
-  const change = user.worth - latestWorth;
-  const percentChange = (change / latestWorth) * 100;
+  const change = user.value - latestValue;
+  const percentChange = (change / latestValue) * 100;
+
+  const monthlyRecords = user.records.monthly_records;
+  const oldestValue = monthlyRecords[0].value;
+
+  const overallChange = user.value - oldestValue;
+  const overallPercentChange = (overallChange / oldestValue) * 100;
 
   const overview = (
     <Row>
@@ -44,55 +51,107 @@ export const UserOverview = ({ user }) => {
       </Col>
       <Col span={6}>
         <Statistic
-          title="Worth"
-          value={user.worth}
+          title="Value"
+          value={user.value}
           precision={2}
           prefix={<Icon type="dollar" />}
         />
       </Col>
       <Col span={6}>
-        <Statistic
-          title="Change"
-          value={change}
-          precision={2}
-          valueStyle={{
-            color: change > 0 ? '#3f8600' : change === 0 ? '#595959' : '#cf1322'
-          }}
-          prefix={
-            <Icon
-              type={
-                change > 0 ? 'arrow-up' : change === 0 ? 'line' : 'arrow-down'
-              }
-            />
-          }
-        />
+        <span>
+          <Statistic
+            title="Daily Change"
+            value={change}
+            precision={2}
+            valueStyle={{
+              color:
+                change > 0 ? '#3f8600' : change === 0 ? '#595959' : '#cf1322'
+            }}
+            prefix={
+              <Icon
+                type={
+                  change > 0 ? 'arrow-up' : change === 0 ? 'line' : 'arrow-down'
+                }
+              />
+            }
+          />
+          <Statistic
+            value={percentChange}
+            precision={4}
+            valueStyle={{
+              color:
+                percentChange > 0
+                  ? '#3f8600'
+                  : percentChange === 0
+                  ? '#595959'
+                  : '#cf1322'
+            }}
+            prefix={
+              <Icon
+                type={
+                  percentChange > 0
+                    ? 'arrow-up'
+                    : percentChange === 0
+                    ? 'line'
+                    : 'arrow-down'
+                }
+              />
+            }
+            suffix="%"
+          />
+        </span>
       </Col>
       <Col span={6}>
-        <Statistic
-          title="Percent Change"
-          value={percentChange}
-          precision={4}
-          valueStyle={{
-            color:
-              percentChange > 0
-                ? '#3f8600'
-                : percentChange === 0
-                ? '#595959'
-                : '#cf1322'
-          }}
-          prefix={
-            <Icon
-              type={
-                percentChange > 0
-                  ? 'arrow-up'
-                  : percentChange === 0
-                  ? 'line'
-                  : 'arrow-down'
-              }
-            />
-          }
-          suffix="%"
-        />
+        <span>
+          <Statistic
+            title="Overall Change"
+            value={overallChange}
+            precision={2}
+            valueStyle={{
+              color:
+                overallChange > 0
+                  ? '#3f8600'
+                  : overallChange === 0
+                  ? '#595959'
+                  : '#cf1322'
+            }}
+            prefix={
+              <Icon
+                type={
+                  overallChange > 0
+                    ? 'arrow-up'
+                    : overallChange === 0
+                    ? 'line'
+                    : 'arrow-down'
+                }
+              />
+            }
+          />
+          <Statistic
+            value={overallPercentChange}
+            precision={4}
+            valueStyle={{
+              color:
+                overallPercentChange > 0
+                  ? '#3f8600'
+                  : overallPercentChange === 0
+                  ? '#595959'
+                  : '#cf1322'
+            }}
+            prefix={
+              <Icon
+                type={
+                  overallPercentChange > 0
+                    ? 'arrow-up'
+                    : overallPercentChange === 0
+                    ? 'line'
+                    : 'arrow-down'
+                }
+              />
+            }
+            suffix="%"
+          />
+        </span>
       </Col>
     </Row>
   );
@@ -126,9 +185,13 @@ export const UserOverview = ({ user }) => {
       render: (text, record) => (
         <span>
           {record.short ? (
-            <Tag color="yellow">short</Tag>
+            <Tooltip title="Short stocks increase in value if their price decreases.">
+              <Tag color="orange">short</Tag>
+            </Tooltip>
           ) : (
-            <Tag color="purple">long</Tag>
+            <Tooltip title="Short stocks increase in value if their price decreases.">
+              <Tag color="purple">long</Tag>
+            </Tooltip>
           )}
           {record.purchase ? (
             <Tag color="blue">buy</Tag>
@@ -174,16 +237,84 @@ export const UserOverview = ({ user }) => {
       title: 'Current Price',
       dataIndex: 'current_price',
       key: 'currentPrice',
-      render: (text) => (
-        <Statistic value={text} precision={2} prefix={<Icon type="dollar" />} />
-      )
+      render: (text, record) => {
+        // const prevTimestamp = new Date(
+        //   record.prev_timestamp.split(' ')[0] +
+        //     'T' +
+        //     record.prev_timestamp.split(' ')[1]
+        // );
+        // const timestamp = new Date(
+        //   record.timestamp.split(' ')[0] + 'T' + record.timestamp.split(' ')[1]
+        // );
+
+        // const priceChange =
+        //   timestamp >= prevTimestamp
+        //     ? 0
+        //     : record.current_price - record.prev_price;
+
+        const priceChange = record.current_price - record.prev_price;
+
+        return (
+          <span>
+            <Statistic
+              value={text}
+              precision={2}
+              prefix={<Icon type="dollar" />}
+            />
+            <Statistic
+              value={priceChange}
+              precision={2}
+              valueStyle={{
+                color:
+                  priceChange > 0
+                    ? '#3f8600'
+                    : priceChange === 0
+                    ? '#595959'
+                    : '#cf1322'
+              }}
+              prefix={
+                <Icon
+                  type={
+                    priceChange > 0
+                      ? 'arrow-up'
+                      : priceChange === 0
+                      ? 'line'
+                      : 'arrow-down'
+                  }
+                />
+              }
+            />
+          </span>
+        );
+      }
     },
     {
-      title: 'Change',
+      title: 'Overall Change',
       key: 'change',
       render: (text, record) => {
-        const change = record.current_price - record.prev_price;
-        const percentChange = (change / record.current_price) * 100;
+        // const prevTimestamp = new Date(
+        //   record.prev_timestamp.split(' ')[0] +
+        //     'T' +
+        //     record.prev_timestamp.split(' ')[1]
+        // );
+        // const timestamp = new Date(
+        //   record.timestamp.split(' ')[0] + 'T' + record.timestamp.split(' ')[1]
+        // );
+
+        // const initPrice =
+        //   timestamp >= prevTimestamp
+        //     ? 0
+        //     : record.current_price - record.prev_price;
+
+        // const initPrice = record.current_price - record.prev_price;
+        // const priceChange = record.short ? -1 * initPrice : initPrice;
+
+        // const change = priceChange * record.shares;
+        // const percentChange = (priceChange / record.current_price) * 100;
+
+        const change = record.current_price * record.shares - record.init_value;
+        const percentChange = (change / record.init_value) * 100;
+
         return (
           <span>
             <Statistic
@@ -238,9 +369,13 @@ export const UserOverview = ({ user }) => {
       key: 'type',
       render: (text, record) =>
         record.short ? (
-          <Tag color="yellow">short</Tag>
+          <Tooltip title="Short stocks increase in value if their price decreases.">
+            <Tag color="orange">short</Tag>
+          </Tooltip>
         ) : (
-          <Tag color="purple">long</Tag>
+          <Tooltip title="Long stocks increase in value if their price increases.">
+            <Tag color="purple">long</Tag>
+          </Tooltip>
         )
     }
   ];
@@ -257,7 +392,7 @@ export const UserOverview = ({ user }) => {
 
   const tracking = (
     <LineChart width={300} height={100} data={user.records.latest_records}>
-      <Line type="monotone" dataKey="worth" />
+      <Line type="monotone" dataKey="value" />
     </LineChart>
   );
 

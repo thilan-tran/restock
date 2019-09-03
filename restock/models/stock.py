@@ -9,15 +9,17 @@ class StockAggregate(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     symbol = db.Column(db.String(10), unique=False, nullable=False)
     company = db.Column(db.String(255), unique=False, nullable=True)
+    ask_size = db.Column(db.Integer, nullable=False)
     prev_price = db.Column(db.Float, nullable=False)
     current_price = db.Column(db.Float, nullable=False)
     prev_timestamp = db.Column(db.DateTime, nullable=False)
     timestamp = db.Column(db.DateTime, nullable=False)
 
-    def __init__(self, symbol, company, price, prev_price=None):
+    def __init__(self, symbol, company, ask_size, price, prev_price=None):
         self.symbol = symbol
         self.company = company
         self.current_price = price
+        self.ask_size = ask_size
         self.prev_price = prev_price if prev_price else self.current_price
         self.timestamp = datetime.datetime.now()
         self.prev_timestamp = self.timestamp
@@ -32,6 +34,7 @@ class StockAggregate(db.Model):
             'symbol': self.symbol,
             'company': self.company,
             'prev_price': self.prev_price,
+            'ask_size': self.ask_size,
             'current_price': self.current_price,
             'timestamp': '{:%Y-%m-%d %H:%M}'.format(self.timestamp),
             'prev_timestamp': '{:%Y-%m-%d %H:%M}'.format(self.prev_timestamp),
@@ -39,6 +42,9 @@ class StockAggregate(db.Model):
             'tracking': [ tracked.to_dict() for tracked in self.tracking ],
             'id': self.id
         }
+
+    def update_ask_size(self, new_size):
+        self.ask_size = new_size
 
     def update_price(self, new_price):
         timestamp = datetime.datetime.now()
@@ -60,7 +66,7 @@ class StockAsset(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     symbol = db.Column(db.String(10), unique=False, nullable=False)
-    init_price = db.Column(db.Float, nullable=False)
+    init_value = db.Column(db.Float, nullable=False)
     shares = db.Column(db.Integer, nullable=False)
     is_short = db.Column(db.Boolean, nullable=False)
     timestamp = db.Column(db.DateTime, nullable=False)
@@ -73,7 +79,7 @@ class StockAsset(db.Model):
 
     def __init__(self, user, aggregate, short=False):
         self.symbol = aggregate.symbol
-        self.init_price = aggregate.current_price
+        self.init_value = 0
         self.shares = 0
         self.is_short = short
         self.user = user
@@ -82,8 +88,8 @@ class StockAsset(db.Model):
 
     def clean_up(self):
         print(self.shares*self.current_price, 'to balance of', self.user.balance)
+        update_balance_records(self.user.balance + self.shares*self.current_price, self.user)
         self.shares = 0
-        update_balance_records(self.user.balance + shares*current_price, self.user)
 
     def __repr__(self):
         return \
@@ -94,7 +100,7 @@ class StockAsset(db.Model):
         return {
             'symbol': self.symbol,
             'company': self.aggregate.company,
-            'init_price': self.init_price,
+            'init_value': self.init_value,
             'prev_price': self.aggregate.prev_price,
             'current_price': self.aggregate.current_price,
             'shares': self.shares,
@@ -110,6 +116,7 @@ class StockAsset(db.Model):
 
         print(change, 'from balance of', self.user.balance)
         self.shares += num_shares
+        self.init_value += self.aggregate.current_price * num_shares
         update_balance_records(self.user.balance - change, self.user)
 
     def sell_shares(self, num_shares):
@@ -119,6 +126,7 @@ class StockAsset(db.Model):
 
         print(change, 'to balance of', self.user.balance)
         self.shares -= num_shares
+        self.init_value -= self.aggregate.current_price * num_shares
         update_balance_records(self.user.balance + change, self.user)
 
     def update_price(self, change):
@@ -237,6 +245,7 @@ class TrackedStock(db.Model):
             'company': self.aggregate.company,
             'prev_price': self.aggregate.prev_price,
             'price': self.aggregate.current_price,
+            'ask_size': self.aggregate.ask_size,
             'user': self.user.username if self.user else 'None',
             'timestamp': '{:%Y-%m-%d %H:%M}'.format(self.timestamp),
             'id': self.id

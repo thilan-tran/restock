@@ -45,7 +45,7 @@ export const addSubscribed = (id) => {
 export const updateSubscribed = (user) => {
   notification.open({
     message: 'User',
-    description: `${user.username} worth updated to $${user.worth}`,
+    description: `${user.username} value updated to $${user.value}`,
     icon: <Icon type="user" style={{ color: '#108ee9' }} />,
     duration: 6
   });

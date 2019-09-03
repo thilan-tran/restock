@@ -15,7 +15,9 @@ const BaseLogin = (props) => {
       username: username.value,
       password: password.value
     });
-    props.history.push('/');
+    console.log(props.history);
+    props.history.goBack();
+    // props.history.push('/');
   };
 
   return (

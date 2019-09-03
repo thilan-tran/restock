@@ -8,14 +8,14 @@ users = Blueprint('users', __name__)
 
 @users.route('/', methods=['GET'])
 def get_all_users():
-    users = User.query.order_by(User.worth.desc()).all()
+    users = User.query.order_by(User.value.desc()).all()
     serialized_users = [u.to_dict() for u in users]
     return jsonify(serialized_users), 200
 
 
 @users.route('/leaderboard', methods=['GET'])
 def get_top_users():
-    users = User.query.order_by(User.worth.desc()).limit(100).all()
+    users = User.query.order_by(User.value.desc()).limit(100).all()
     serialized_users = [u.to_dict() for u in users]
     return jsonify(serialized_users), 200
 
