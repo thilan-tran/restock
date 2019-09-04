@@ -25,6 +25,20 @@ def get_company(symbol):
     return None
 
 
+def search_stocks(search):
+    results = []
+    folder = os.path.dirname(os.path.abspath(__file__))
+    path = os.path.join(folder, 'symbol_data.json')
+
+    with open(path, 'r') as f:
+        ref_data = json.load(f)
+        for data in ref_data:
+            if search.lower() in data['name'].lower() or search.lower() in data['symbol'].lower():
+                results.append((data['symbol'], data['name']))
+
+    return results
+
+
 def get_symbol(search):
     folder = os.path.dirname(os.path.abspath(__file__))
     path = os.path.join(folder, 'symbol_data.json')
@@ -60,7 +74,7 @@ def get_stock_detail(symbol):
         if iex.get('askPrice'):
             return iex.get('askSize'), iex.get('askPrice')
         if iex.get('lastSalePrice'):
-            return None, iex.get('lastSalePrice')
+            return iex.get('lastSaleSize'), iex.get('lastSalePrice')
         if iex.get('price'):
             return iex.get('size'), iex.get('price')
 

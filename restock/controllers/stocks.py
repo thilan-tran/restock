@@ -2,7 +2,7 @@ from flask import Blueprint, jsonify, request
 
 from restock import db
 from restock.models.stock import StockAggregate, TrackedStock
-from restock.utils.stocks import fmp_stocks_overview, av_stocks_by_symbol, get_symbol
+from restock.utils.stocks import fmp_stocks_overview, av_stocks_by_symbol, get_symbol, search_stocks
 from restock.utils.errors import ErrorResponse
 
 stocks = Blueprint('stocks', __name__)
@@ -49,3 +49,9 @@ def get_stocks_by_query(query):
     if symbol_data:
         return jsonify(symbol_data), 200
     return ErrorResponse('Not Found', 'No such stock with symbol {}.'.format(symbol)).to_json(), 404
+
+@stocks.route('/search/<string:search>', methods=['GET'])
+def get_stocks_by_search(search):
+    serialized = [ { 'symbol': result[0], 'company': result[1] }
+                   for result in search_stocks(search) ]
+    return jsonify(serialized), 200

@@ -115,6 +115,7 @@ class StockAsset(db.Model):
         change = num_shares * self.aggregate.current_price
 
         print(change, 'from balance of', self.user.balance)
+        print(num_shares, 'at', self.aggregate.current_price)
         self.shares += num_shares
         self.init_value += self.aggregate.current_price * num_shares
         update_balance_records(self.user.balance - change, self.user)

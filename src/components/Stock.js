@@ -4,6 +4,9 @@ import { withRouter } from 'react-router';
 import { Link } from 'react-router-dom';
 import { connect } from 'react-redux';
 import {
+  Breadcrumb,
+  Cascader,
+  Empty,
   Dropdown,
   Menu,
   Button,
@@ -11,6 +14,7 @@ import {
   Row,
   Card,
   Statistic,
+  Input,
   Icon,
   Skeleton,
   Radio,
@@ -33,12 +37,12 @@ import {
 
 import StockService from '../services/StockService';
 import { useField } from '../hooks/hooks';
-import { createTransaction } from '../actions/users';
+import { createTransaction, removeTransaction } from '../actions/users';
 import { initOverview, addTracking } from '../actions/tracking';
 
 export const StockOverview = ({ stock }) => {
   const change = stock.price - stock.prev_price;
-  const percentChange = (change / stock.price) * 100;
+  const percentChange = (change / stock.prev_price) * 100;
   return (
     <Col xs={24} sm={24} md={12} lg={8} xl={8} style={{ padding: '8px' }}>
       <Link to={'/stocks/' + stock.symbol}>
@@ -94,15 +98,16 @@ const BaseSliderInput = ({
   symbol,
   min,
   max,
+  defaultVal,
   history,
   auth,
-  createTransaction
+  createTransaction,
+  removeTransaction
 }) => {
-  const [value, setValue] = useState(150);
+  const [value, setValue] = useState(defaultVal);
   const [type, setType] = useState('long');
 
-  const onMenuClick = (e) => {
-    console.log(e);
+  const onMenuClick = (sell = true) => (e) => {
     if (!auth.token) {
       history.push('/login');
     }
@@ -110,9 +115,13 @@ const BaseSliderInput = ({
     const newTransaction = {
       symbol,
       shares: Number(value),
-      short: e.key === 'longBuy' ? false : true
+      short: type === 'long' ? false : true
     };
-    createTransaction(newTransaction, auth.token);
+    if (sell) {
+      createTransaction(newTransaction, auth.token);
+    } else {
+      removeTransaction(newTransaction, auth.token);
+    }
   };
 
   return (
@@ -142,8 +151,10 @@ const BaseSliderInput = ({
         </Col>
         <Col span={4}>
           <Button.Group>
-            <Button type="primary">Buy</Button>
-            <Button>Sell</Button>
+            <Button type="primary" onClick={onMenuClick(true)}>
+              Buy
+            </Button>
+            <Button onClick={onMenuClick(false)}>Sell</Button>
           </Button.Group>
         </Col>
       </Row>
@@ -156,7 +167,12 @@ const mapStateToProps = (state) => ({
   init: state.overviewInitialized
 });
 
-const mapDispatchToProps = { addTracking, createTransaction, initOverview };
+const mapDispatchToProps = {
+  addTracking,
+  createTransaction,
+  removeTransaction,
+  initOverview
+};
 
 const SliderInput = withRouter(
   connect(
@@ -178,7 +194,28 @@ const BaseStockView = (props) => {
   }, []);
 
   const tracked = props.tracking.find((stock) => stock.symbol === props.symbol);
-  if (!stockHistory.quarter_hour_data || !tracked) return <Skeleton active />;
+  if (!stockHistory.quarter_hour_data || !tracked)
+    return (
+      <div>
+        <Col xs={24} sm={24} md={12} lg={8} xl={8} style={{ padding: '8px' }}>
+          <Card>
+            <Skeleton active />
+          </Card>
+        </Col>
+        <Col xs={24} sm={24} md={12} lg={16} xl={16} style={{ padding: '8px' }}>
+          <Card>
+            <Skeleton active />
+          </Card>
+        </Col>
+        <Col span={24} style={{ padding: '8px' }}>
+          <Card style={{ minHeight: 500 }}>
+            <Skeleton active />
+            <Skeleton active />
+            <Skeleton active />
+          </Card>
+        </Col>
+      </div>
+    );
 
   const hourData = stockHistory.quarter_hour_data.map((elem, ind, arr) => {
     const time = moment(
@@ -207,11 +244,11 @@ const BaseStockView = (props) => {
   const tabList = [
     {
       key: 'quarterHour',
-      tab: 'By Quarter Hour'
+      tab: 'Day'
     },
     {
       key: 'day',
-      tab: 'By Day'
+      tab: 'Month'
     }
   ];
 
@@ -219,14 +256,19 @@ const BaseStockView = (props) => {
     <div>
       <StockOverview stock={tracked} />
       <Col xs={24} sm={24} md={12} lg={16} xl={16} style={{ padding: '8px' }}>
-        <Card title="Transactions" style={{ minHeight: '175px' }}>
+        <Card title="TRANSACTIONS" style={{ minHeight: '175px' }}>
           <Card.Meta description="Shares:" />
-          <SliderInput min={0} max={2000} symbol={props.symbol} />
+          <SliderInput
+            min={0}
+            max={2000}
+            defaultVal={tracked.ask_size}
+            symbol={props.symbol}
+          />
         </Card>
       </Col>
       <Col span={24} style={{ padding: '8px' }}>
         <Card
-          title="History"
+          title="HISTORY"
           tabList={tabList}
           activeTabKey={tab}
           onTabChange={(key) => setTab(key)}
@@ -298,6 +340,8 @@ export const StockView = connect(
 )(BaseStockView);
 
 const BaseStockList = (props) => {
+  const [option, setOption] = useState(['change', 'decreasing']);
+
   useEffect(() => {
     props.initOverview();
   }, []);
@@ -323,9 +367,98 @@ const BaseStockList = (props) => {
       </div>
     );
 
+  const options = [
+    {
+      value: 'price',
+      label: 'Price',
+      children: [
+        {
+          value: 'decreasing',
+          label: 'Decreasing'
+        },
+        {
+          value: 'increasing',
+          label: 'Increasing'
+        }
+      ]
+    },
+    {
+      value: 'activity',
+      label: 'Activity',
+      children: [
+        {
+          value: 'decreasing',
+          label: 'Decreasing'
+        },
+        {
+          value: 'increasing',
+          label: 'Increasing'
+        }
+      ]
+    },
+    {
+      value: 'change',
+      label: 'Daily Change',
+      children: [
+        {
+          value: 'decreasing',
+          label: 'Decreasing'
+        },
+        {
+          value: 'increasing',
+          label: 'Increasing'
+        }
+      ]
+    }
+  ];
+
+  const compare = {
+    price: {
+      decreasing: (a, b) => b.price - a.price,
+      increasing: (a, b) => a.price - b.price
+    },
+    activity: {
+      decreasing: (a, b) =>
+        Math.abs(((b.price - b.prev_price) / b.prev_price) * 100) -
+        Math.abs(((a.price - a.prev_price) / a.prev_price) * 100),
+      increasing: (a, b) =>
+        Math.abs(((a.price - a.prev_price) / a.prev_price) * 100) -
+        Math.abs(((b.price - b.prev_price) / b.prev_price) * 100)
+    },
+    change: {
+      decreasing: (a, b) =>
+        ((b.price - b.prev_price) / b.prev_price) * 100 -
+        ((a.price - a.prev_price) / a.prev_price) * 100,
+      increasing: (a, b) =>
+        ((a.price - a.prev_price) / a.prev_price) * 100 -
+        ((b.price - b.prev_price) / b.prev_price) * 100
+    }
+  };
+
+  const sorted = props.tracking;
+  sorted.sort(compare[option[0]][option[1]]);
+
   return (
     <div>
-      {props.tracking.map((s) => (
+      <Row type="flex" align="middle">
+        <Col span={20}>
+          <Breadcrumb style={{ margin: '16px' }}>
+            <Breadcrumb.Item>
+              <Link to="/stocks">Stocks</Link>
+            </Breadcrumb.Item>
+            <Breadcrumb.Item>Overview</Breadcrumb.Item>
+          </Breadcrumb>
+        </Col>
+        <Col span={4}>
+          <Cascader
+            options={options}
+            onChange={(val) => setOption(val)}
+            placeholder="Sort by"
+            style={{ width: '100%' }}
+          />
+        </Col>
+      </Row>
+      {sorted.map((s) => (
         <StockOverview key={s.symbol} stock={s} />
       ))}
     </div>
@@ -385,24 +518,56 @@ const StockDetail = connect(
 
 export const StockSearch = () => {
   const search = useField('text');
-  const [symbolData, setData] = useState({});
+  const [searchData, setData] = useState([]);
+  const [option, setOption] = useState('company');
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    StockService.getBySymbol(search.value).then((data) => setData(data));
+  const handleSearch = (search) => {
+    StockService.getSearchResults(search).then((data) => {
+      console.log(data);
+      setData(data);
+    });
   };
+
+  const options = (
+    <Select defaultValue={option} onChange={(val) => setOption(val)}>
+      <Select.Option value="company">Company</Select.Option>
+      <Select.Option value="symbol">Symbol</Select.Option>
+    </Select>
+  );
 
   return (
     <div>
-      <form onSubmit={handleSubmit}>
-        <h2>Search Stocks</h2>
-        <div>
-          Symbol:
-          <input {...search} />
-        </div>
-        <button type="submit">search</button>
-      </form>
-      <StockDetail stock={symbolData} />
+      <Row type="flex" justify="center">
+        <Col span={16} style={{ margin: '25px' }}>
+          <Input.Search
+            // addonBefore={options}
+            placeholder="Search"
+            onSearch={handleSearch}
+            size="large"
+          />
+        </Col>
+      </Row>
+      {searchData.length ? (
+        searchData.map((result) => (
+          <Col
+            key={result.symbol}
+            xs={24}
+            sm={24}
+            md={12}
+            lg={8}
+            xl={8}
+            style={{ padding: '8px' }}
+          >
+            <Link to={'/stocks/' + result.symbol.toLowerCase()}>
+              <Card title={result.symbol} hoverable>
+                <Card.Meta description={result.company.substr(0, 50)} />
+              </Card>
+            </Link>
+          </Col>
+        ))
+      ) : (
+        <Empty />
+      )}
     </div>
   );
 };

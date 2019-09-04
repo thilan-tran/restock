@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { connect } from 'react-redux';
 import { Link } from 'react-router-dom';
-import { LineChart, Line } from 'recharts';
 import {
+  Breadcrumb,
+  Cascader,
+  Button,
   Timeline,
   Avatar,
   PageHeader,
@@ -15,8 +17,24 @@ import {
   Tag,
   Tooltip,
   Empty,
-  Skeleton
+  Skeleton,
+  Select
 } from 'antd';
+
+import {
+  AreaChart,
+  ScatterChart,
+  Scatter,
+  Area,
+  Tooltip as ChartTooltip,
+  XAxis,
+  YAxis,
+  LineChart,
+  Line,
+  ResponsiveContainer,
+  CartesianGrid
+} from 'recharts';
+import moment from 'moment';
 
 import {
   initLeaderboard,
@@ -234,7 +252,7 @@ export const UserOverview = ({ user }) => {
       )
     },
     {
-      title: 'Current Price',
+      title: 'Daily Price Change',
       dataIndex: 'current_price',
       key: 'currentPrice',
       render: (text, record) => {
@@ -312,7 +330,8 @@ export const UserOverview = ({ user }) => {
         // const change = priceChange * record.shares;
         // const percentChange = (priceChange / record.current_price) * 100;
 
-        const change = record.current_price * record.shares - record.init_value;
+        let change = record.current_price * record.shares - record.init_value;
+        change = record.short ? -1 * change : change;
         const percentChange = (change / record.init_value) * 100;
 
         return (
@@ -382,6 +401,7 @@ export const UserOverview = ({ user }) => {
 
   const portfolio = user.portfolio.length ? (
     <Table
+      pagination={{ pageSize: 4 }}
       columns={portfolioColumns}
       dataSource={user.portfolio}
       rowKey={(record) => record.id}
@@ -407,6 +427,11 @@ export const UserOverview = ({ user }) => {
     <Col style={{ padding: '8px' }}>
       <Card
         hoverable
+        extra={
+          <Link to={'/users/' + user.id}>
+            <Button type="primary">More Info</Button>
+          </Link>
+        }
         tabList={[
           { tab: 'Overview', key: 'overview' },
           { tab: 'Portfolio', key: 'portfolio' },
@@ -439,6 +464,9 @@ const BaseUserView = ({
   subscribed,
   socket
 }) => {
+  const [tab, setTab] = useState('0');
+  const [option, setOption] = useState('value');
+
   useEffect(() => {
     addSubscribed(id);
 
@@ -450,26 +478,133 @@ const BaseUserView = ({
   const user = subscribed.find((u) => u.id === id);
   if (!user) return <p>loading...</p>;
 
-  const stocks = user.portfolio.map((s) => {
-    console.log(s);
-    const change = s.shares * (s.current_price - s.init_price);
-    const percentChange = change / (s.shares * s.init_price);
+  // const stocks = user.portfolio.map((s) => {
+  //   console.log(s);
+  //   const change = s.shares * (s.current_price - s.init_price);
+  //   const percentChange = change / (s.shares * s.init_price);
 
-    return (
-      <p key={s.id}>
-        {s.shares}{' '}
-        <Link to={'/stocks/' + s.symbol}>{s.symbol.toUpperCase()}</Link>{' '}
-        {s.short ? 'short' : 'stock'} bought for ${s.init_price}, now $
-        {s.current_price} at {s.timestamp} Change: ${change.toFixed(2)}{' '}
-        {percentChange.toFixed(4)}%
-      </p>
-    );
+  //   return (
+  //     <p key={s.id}>
+  //       {s.shares}{' '}
+  //       <Link to={'/stocks/' + s.symbol}>{s.symbol.toUpperCase()}</Link>{' '}
+  //       {s.short ? 'short' : 'stock'} bought for ${s.init_price}, now $
+  //       {s.current_price} at {s.timestamp} Change: ${change.toFixed(2)}{' '}
+  //       {percentChange.toFixed(4)}%
+  //     </p>
+  //   );
+  // });
+
+  const mapTimestamp = (record) => ({
+    ...record,
+    time: new Date(
+      record.timestamp.split(' ')[0] + 'T' + record.timestamp.split(' ')[1]
+    ).getTime()
   });
+
+  const records = [
+    user.records.latest_records.map(mapTimestamp),
+    user.records.hourly_records.map(mapTimestamp),
+    user.records.daily_records.map(mapTimestamp),
+    user.records.weekly_records.map(mapTimestamp),
+    user.records.monthly_records.map(mapTimestamp)
+  ];
+
+  const tabList = [
+    {
+      key: '0',
+      tab: 'Latest'
+    },
+    {
+      key: '1',
+      tab: 'Hourly'
+    },
+    {
+      key: '2',
+      tab: 'Daily'
+    },
+    {
+      key: '3',
+      tab: 'Weekly'
+    },
+    {
+      key: '4',
+      tab: 'Monthly'
+    }
+  ];
 
   return (
     <div>
       <UserOverview user={user} />
-      {stocks}
+      <Col span={24} style={{ padding: '8px' }}>
+        <Card
+          title="HISTORY"
+          tabList={tabList}
+          activeTabKey={tab}
+          onTabChange={(key) => setTab(key)}
+          extra={
+            <Select
+              defaultValue={option}
+              onChange={(val) => setOption(val)}
+              style={{ width: '120px' }}
+            >
+              <Select.Option value="value">User Value</Select.Option>
+              <Select.Option value="balance">User Balance</Select.Option>
+            </Select>
+          }
+        >
+          <ResponsiveContainer width="100%" height={400}>
+            <AreaChart data={records[Number(tab)]}>
+              <CartesianGrid strokeDasharray="5 5" vertical={false} />
+              <XAxis
+                type="number"
+                padding={{ right: 15 }}
+                name="Time"
+                dataKey="time"
+                axisLine={false}
+                tickLine={false}
+                tickCount={10}
+                interval={0}
+                domain={['dataMin', 'dataMax']}
+                tickFormatter={(time) =>
+                  Number(tab) <= 1
+                    ? moment(time).format('HH:mm')
+                    : moment(time)
+                        .format('ddd HH:mm')
+                        .toUpperCase()
+                }
+              />
+              <YAxis
+                width={80}
+                type="number"
+                tickLine={false}
+                interval={0}
+                domain={[
+                  (dataMin) => dataMin * 0.96,
+                  (dataMax) => dataMax * 1.02
+                ]}
+                tickFormatter={(val) => '$' + val.toFixed(0)}
+              />
+              <ChartTooltip
+                separator=" "
+                formatter={(val, name) => ['$' + val, name.toUpperCase()]}
+                labelFormatter={(val) =>
+                  moment(val)
+                    .format('ddd HH:mm')
+                    .toUpperCase()
+                }
+              />
+              <Area
+                type="monotone"
+                dataKey={option}
+                fill="#ccc"
+                dot={false}
+                activeDot={{ r: 8, strokeWidth: 2 }}
+                strokeWidth={4}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </Card>
+      </Col>
     </div>
   );
 };
@@ -483,12 +618,106 @@ const BaseLeaderboard = (props) => {
   // useEffect(() => {
   //   props.initLeaderboard();
   // }, []);
+  const [option, setOption] = useState(['value', 'decreasing']);
 
   if (!props.subscribed.length) return <Skeleton active />;
 
+  const options = [
+    {
+      value: 'value',
+      label: 'User Value',
+      children: [
+        {
+          value: 'decreasing',
+          label: 'Decreasing'
+        },
+        {
+          value: 'increasing',
+          label: 'Increasing'
+        }
+      ]
+    },
+    {
+      value: 'balance',
+      label: 'User Balance',
+      children: [
+        {
+          value: 'decreasing',
+          label: 'Decreasing'
+        },
+        {
+          value: 'increasing',
+          label: 'Increasing'
+        }
+      ]
+    },
+    {
+      value: 'change',
+      label: 'Value Change',
+      children: [
+        {
+          value: 'decreasing',
+          label: 'Decreasing'
+        },
+        {
+          value: 'increasing',
+          label: 'Increasing'
+        }
+      ]
+    }
+  ];
+
+  const compare = {
+    value: {
+      decreasing: (a, b) => b.value - a.value,
+      increasing: (a, b) => a.value - b.value
+    },
+    balance: {
+      decreasing: (a, b) => b.balance - a.balance,
+      increasing: (a, b) => a.balance - b.balance
+    },
+    change: {
+      decreasing: (a, b) => {
+        const bRecords = b.records.daily_records;
+        const aRecords = a.records.daily_records;
+        const bChange = b.value - bRecords[bRecords.length - 1].value;
+        const aChange = a.value - aRecords[aRecords.length - 1].value;
+        return bChange - aChange;
+      },
+      increasing: (a, b) => {
+        const bRecords = b.records.daily_records;
+        const aRecords = a.records.daily_records;
+        const bChange = b.value - bRecords[bRecords.length - 1].value;
+        const aChange = a.value - aRecords[aRecords.length - 1].value;
+        return aChange - bChange;
+      }
+    }
+  };
+
+  const sorted = props.subscribed;
+  sorted.sort(compare[option[0]][option[1]]);
+
   return (
     <div>
-      {props.subscribed.map((u) => (
+      <Row type="flex" align="middle">
+        <Col span={20}>
+          <Breadcrumb style={{ margin: '16px' }}>
+            <Breadcrumb.Item>
+              <Link to="/users">Users</Link>
+            </Breadcrumb.Item>
+            <Breadcrumb.Item>Leaderboard</Breadcrumb.Item>
+          </Breadcrumb>
+        </Col>
+        <Col span={4}>
+          <Cascader
+            options={options}
+            onChange={(val) => setOption(val)}
+            placeholder="Sort by"
+            style={{ width: '100%' }}
+          />
+        </Col>
+      </Row>
+      {sorted.map((u) => (
         <UserOverview key={u.id} user={u} />
       ))}
     </div>

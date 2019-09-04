@@ -1,8 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { connect } from 'react-redux';
-import { BrowserRouter as Router, Route, NavLink } from 'react-router-dom';
+import {
+  BrowserRouter as Router,
+  Route,
+  NavLink,
+  Link
+} from 'react-router-dom';
 
-import { Row, Col, Layout, Menu } from 'antd';
+import { Icon, Row, Col, Layout, Menu, Breadcrumb, PageHeader } from 'antd';
 import 'antd/dist/antd.css';
 import { Leaderboard, UserView } from './components/User';
 import { StockList, StockSearch, StockView } from './components/Stock';
@@ -44,12 +49,16 @@ const App = (props) => {
           </Col>
           <Col span={4}>
             <Menu theme="dark" mode="horizontal" style={{ textAlign: 'right' }}>
-              <Menu.Item>
-                <NavLink to="/register">Register</NavLink>
-              </Menu.Item>
-              <Menu.Item>
-                <NavLink to="/login">Login</NavLink>
-              </Menu.Item>
+              {props.auth.token ? (
+                <Menu.Item>
+                  <Icon type="logout" />
+                  Logout
+                </Menu.Item>
+              ) : (
+                <Menu.Item>
+                  <NavLink to="/login">Login</NavLink>
+                </Menu.Item>
+              )}
             </Menu>
           </Col>
         </Row>
@@ -58,22 +67,98 @@ const App = (props) => {
           <Route
             exact
             path="/"
-            render={() => <StockList stocks={props.tracking} />}
+            render={() => (
+              <div>
+                <StockList stocks={props.tracking} />
+              </div>
+            )}
           />
-          <Route exact path="/stocks" render={() => <StockSearch />} />
+          <Route
+            exact
+            path="/stocks"
+            render={() => (
+              <div>
+                <Breadcrumb style={{ margin: '16px' }}>
+                  <Breadcrumb.Item>
+                    <Link to="/stocks">Stocks</Link>
+                  </Breadcrumb.Item>
+                  <Breadcrumb.Item>Search</Breadcrumb.Item>
+                </Breadcrumb>
+                <StockSearch />
+              </div>
+            )}
+          />
           <Route
             exact
             path="/stocks/:symbol"
-            render={({ match }) => <StockView symbol={match.params.symbol} />}
+            render={({ match }) => (
+              <div>
+                <Breadcrumb style={{ margin: '16px' }}>
+                  <Breadcrumb.Item>
+                    <Link to="/stocks">Stocks</Link>
+                  </Breadcrumb.Item>
+                  <Breadcrumb.Item>
+                    {match.params.symbol.toUpperCase()}
+                  </Breadcrumb.Item>
+                </Breadcrumb>
+                <StockView symbol={match.params.symbol} />
+              </div>
+            )}
           />
-          <Route exact path="/users" render={() => <Leaderboard />} />
+          <Route
+            exact
+            path="/users"
+            render={() => (
+              <div>
+                <Leaderboard />
+              </div>
+            )}
+          />
           <Route
             exact
             path="/users/:id"
-            render={({ match }) => <UserView id={Number(match.params.id)} />}
+            render={({ match }) => (
+              <div>
+                <Breadcrumb style={{ margin: '16px' }}>
+                  <Breadcrumb.Item>
+                    <Link to="/users">Users</Link>
+                  </Breadcrumb.Item>
+                  <Breadcrumb.Item>{match.params.id}</Breadcrumb.Item>
+                </Breadcrumb>
+                <UserView id={Number(match.params.id)} />
+              </div>
+            )}
           />
-          <Route exact path="/login" render={() => <Login />} />
-          <Route exact path="/register" render={() => <Register />} />
+          <Route
+            exact
+            path="/login"
+            render={() => (
+              <div>
+                <Breadcrumb style={{ margin: '16px' }}>
+                  <Breadcrumb.Item>
+                    <Link to="/users">Users</Link>
+                  </Breadcrumb.Item>
+                  <Breadcrumb.Item>Login</Breadcrumb.Item>
+                </Breadcrumb>
+                <Login />
+              </div>
+            )}
+          />
+          <Route
+            exact
+            path="/register"
+            render={() => (
+              <div>
+                <Breadcrumb style={{ margin: '16px' }}>
+                  <Breadcrumb.Item>
+                    <Link to="/users">Users</Link>
+                  </Breadcrumb.Item>
+                  <Breadcrumb.Item>Register</Breadcrumb.Item>
+                </Breadcrumb>
+                <Register />
+              </div>
+            )}
+          />
         </Content>
 
         <Footer style={{ textAlign: 'center' }}>

@@ -11,4 +11,10 @@ const getBySymbol = (symbol) =>
     .then((res) => res.data)
     .catch((err) => console.log(err.response.data));
 
-export default { getOverview, getBySymbol };
+const getSearchResults = (search) =>
+  axios
+    .get(baseUrl + '/search/' + search)
+    .then((res) => res.data)
+    .catch((err) => console.log(err.response.data));
+
+export default { getOverview, getBySymbol, getSearchResults };

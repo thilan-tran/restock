@@ -59,11 +59,15 @@ export const updateSubscribed = (user) => {
 
 export const removeSubscribed = (id) => {
   return (dispatch, getState, socket) => {
-    socket.emit('unsubscribe', id);
-    dispatch({
-      type: 'REMOVE_SUBSCRIBED',
-      id
-    });
+    const state = getState();
+    const onLeaderboard = state.leaderboard.includes(id);
+    if (!onLeaderboard) {
+      socket.emit('unsubscribe', id);
+      dispatch({
+        type: 'REMOVE_SUBSCRIBED',
+        id
+      });
+    }
   };
 };
 
@@ -81,12 +85,12 @@ export const createTransaction = (transaction, token) => {
   };
 };
 
-export const removeTransaction = (id, user, token) => {
+export const removeTransaction = (transaction, token) => {
   const config = {
     headers: { Authorization: `bearer ${token}` }
   };
   return async (dispatch) => {
-    const res = await axios.delete(transactUrl + id, config);
+    const res = await axios.delete(transactUrl, transaction, config);
     console.log(res.data);
     dispatch({
       type: 'OTHER'

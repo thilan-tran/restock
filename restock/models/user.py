@@ -96,7 +96,7 @@ class RecordMixin():
         return {
             'balance': self.balance,
             'value': self.value,
-            'timestamp': '{:%Y-%m-%d %H:%M}'.format(self.timestamp),
+            'timestamp': '{:%Y-%m-%d %H:%M:%S}'.format(self.timestamp),
             'user': self.user.username,
             'id': self.id
         }
@@ -142,7 +142,8 @@ def update_and_limit_record(Record, new_balance, new_value, user):
 def update_balance_records(new_balance, user):
     user.balance = new_balance
     new_value = new_balance + sum([ asset.aggregate.current_price * asset.shares if not asset.is_short else
-                                    asset.shares * (2*asset.init_price - asset.aggregate.current_price)
+                                    2*asset.init_value - asset.shares*asset.aggregate.current_price
+                                    # asset.shares * (2*asset.init_price - asset.aggregate.current_price)
                                     for asset in user.portfolio ])
     user.value = new_value
 
