@@ -27,16 +27,20 @@ def get_company(symbol):
 
 def search_stocks(search):
     results = []
+    symbols = []
     folder = os.path.dirname(os.path.abspath(__file__))
     path = os.path.join(folder, 'symbol_data.json')
 
     with open(path, 'r') as f:
         ref_data = json.load(f)
         for data in ref_data:
-            if search.lower() in data['name'].lower() or search.lower() in data['symbol'].lower():
+            if search.lower() in data['symbol'].lower():
+                symbols.append((data['symbol'], data['name']))
+            elif search.lower() in data['name'].lower():
                 results.append((data['symbol'], data['name']))
 
-    return results
+    symbols.extend(results)
+    return symbols
 
 
 def get_symbol(search):
@@ -71,8 +75,6 @@ def fmp_stocks_overview():
 def get_stock_detail(symbol):
     iex = iex_stocks_by_symbol(symbol)
     if iex:
-        if iex.get('askPrice'):
-            return iex.get('askSize'), iex.get('askPrice')
         if iex.get('lastSalePrice'):
             return iex.get('lastSaleSize'), iex.get('lastSalePrice')
         if iex.get('price'):
@@ -82,12 +84,13 @@ def get_stock_detail(symbol):
     # if av:
     #     return av['quarter_hour_data'][0]['close']
 
-    return None
+    print('Nothing for', symbol)
+    return None, None
 
 
 def iex_stocks_by_symbol(symbol):
     tops = requests.get(iex_url + symbol).json()
-    if tops:
+    if tops and tops[0]['lastSalePrice']:
         return tops[0]
 
     last = requests.get(iex_last_url+symbol).json()

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { connect } from 'react-redux';
+import { withRouter } from 'react-router';
 import { Link } from 'react-router-dom';
 import {
   Breadcrumb,
@@ -42,7 +43,7 @@ import {
   removeSubscribed
 } from '../actions/users';
 
-export const UserOverview = ({ user }) => {
+const BaseUserOverview = ({ user, history }) => {
   const [tab, setTab] = useState('overview');
 
   const dailyRecords = user.records.daily_records;
@@ -228,6 +229,7 @@ export const UserOverview = ({ user }) => {
 
   const transactions = user.transactions.length ? (
     <Table
+      pagination={{ pageSize: 4 }}
       columns={columns}
       dataSource={user.transactions}
       rowKey={(record) => record.id}
@@ -419,35 +421,40 @@ export const UserOverview = ({ user }) => {
   const tabs = {
     overview,
     portfolio,
-    transactions,
-    tracking
+    transactions
   };
 
   return (
     <Col style={{ padding: '8px' }}>
       <Card
         hoverable
-        extra={
-          <Link to={'/users/' + user.id}>
-            <Button type="primary">More Info</Button>
-          </Link>
-        }
         tabList={[
           { tab: 'Overview', key: 'overview' },
           { tab: 'Portfolio', key: 'portfolio' },
           { tab: 'Transactions', key: 'transactions' },
-          { tab: 'Tracking', key: 'tracking' }
+          { tab: 'Details', key: 'details' }
         ]}
         activeTabKey={tab}
-        onTabChange={(key) => setTab(key)}
+        onTabChange={(key) => {
+          if (key !== 'details') {
+            setTab(key);
+          } else {
+            history.push('/users/' + user.id);
+          }
+        }}
       >
-        <Card.Meta avatar={<Avatar icon="user" />} title={user.username} />
+        <Card.Meta
+          avatar={<Avatar icon="user" />}
+          title={<Link to={'/users/' + user.id}>{user.username}</Link>}
+        />
         <br />
         {tabs[tab]}
       </Card>
     </Col>
   );
 };
+
+export const UserOverview = withRouter(BaseUserOverview);
 
 const mapStateToProps = (state) => ({
   auth: state.auth,

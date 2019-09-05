@@ -50,11 +50,11 @@ class StockAggregate(db.Model):
         timestamp = datetime.datetime.now()
         time_diff = timestamp - self.prev_timestamp
         if time_diff.days >= 1:
-            self.prev_price = current_price
+            self.prev_price = self.current_price
             self.prev_timestamp = timestamp
 
         change = new_price - self.current_price
-        print(self.symbol, 'changed by', change)
+        # print(self.symbol, 'changed by', change)
         self.current_price = new_price
         rel = getattr(self, 'assets', None)
         if rel:
@@ -134,7 +134,7 @@ class StockAsset(db.Model):
         # change = self.shares * (new_price - self.aggregate.current_price)
         change *= self.shares
         change = -1 * change if self.is_short else change
-        print(self.symbol, 'short asset' if self.is_short else 'stock asset', 'changed by', change)
+        # print(self.symbol, 'short asset' if self.is_short else 'stock asset', 'changed by', change)
 
         if change:
             # self.current_price = new_price

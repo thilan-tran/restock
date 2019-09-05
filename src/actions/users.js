@@ -61,7 +61,7 @@ export const removeSubscribed = (id) => {
   return (dispatch, getState, socket) => {
     const state = getState();
     const onLeaderboard = state.leaderboard.includes(id);
-    if (!onLeaderboard) {
+    if (!onLeaderboard && id != state.auth.userId) {
       socket.emit('unsubscribe', id);
       dispatch({
         type: 'REMOVE_SUBSCRIBED',
@@ -86,12 +86,15 @@ export const createTransaction = (transaction, token) => {
 };
 
 export const removeTransaction = (transaction, token) => {
-  const config = {
-    headers: { Authorization: `bearer ${token}` }
-  };
   return async (dispatch) => {
-    const res = await axios.delete(transactUrl, transaction, config);
-    console.log(res.data);
+    try {
+      const res = await axios.delete(transactUrl, {
+        headers: { Authorization: `bearer ${token}` },
+        data: transaction
+      });
+    } catch (err) {
+      console.log(err.response);
+    }
     dispatch({
       type: 'OTHER'
       // type: 'DELETE_TRANSACTION',
