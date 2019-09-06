@@ -1,24 +1,30 @@
 import axios from 'axios';
 import React from 'react';
-import { notification, Icon } from 'antd';
+import { message, notification, Icon } from 'antd';
 
 const userUrl = '/api/users/';
 const transactUrl = '/api/transactions/';
 
 export const initLeaderboard = () => {
   return async (dispatch, getState, socket) => {
-    const res = await axios.get(userUrl + 'leaderboard');
-    res.data.forEach((user) => {
-      socket.emit('subscribe', user.id);
-      dispatch({
-        type: 'FORCE_ADD_SUBSCRIBED',
-        user: user
+    const state = getState();
+    if (!state.leaderboardInitialized) {
+      const res = await axios.get(userUrl + 'leaderboard');
+      res.data.forEach((user) => {
+        socket.emit('subscribe', user.id);
+        dispatch({
+          type: 'ADD_SUBSCRIBED',
+          user: user
+        });
       });
-    });
-    dispatch({
-      type: 'SET_LEADERBOARD',
-      users: res.data.map((elem) => elem.id)
-    });
+      dispatch({
+        type: 'SET_LEADERBOARD',
+        users: res.data.map((elem) => elem.id)
+      });
+      dispatch({ type: 'LEADERBOARD_INIT' });
+    } else {
+      console.log('already initialized leaderboard');
+    }
   };
 };
 
@@ -42,18 +48,46 @@ export const addSubscribed = (id) => {
   };
 };
 
-export const updateSubscribed = (user) => {
-  notification.open({
-    message: 'User',
-    description: `${user.username} value updated to $${user.value}`,
-    icon: <Icon type="user" style={{ color: '#108ee9' }} />,
-    duration: 6
-  });
+export const updateSubscribed = (data) => {
+  // notification.open({
+  //   message: 'User',
+  //   description: `${user.username} value updated to $${user.value}`,
+  //   icon: <Icon type="user" style={{ color: '#108ee9' }} />,
+  //   duration: 6
+  // });
+
+  const { type, update, user } = data;
+  let message = '';
+  if (type === 'transaction') {
+    message = `${update.user} ${update.purchase ? 'purchased' : 'sold'} ${
+      update.shares
+    } ${
+      update.short ? 'short' : 'long'
+    } shares of ${update.symbol.toUpperCase()}.`;
+  }
+  // else if (type === 'tracking') {
+  //   message = `${update.user} started tracking ${update.symbol}.`;
+  // } else if (type === 'untracking') {
+  //   message = `${update.user} stopped tracking ${update.symbol}.`;
+  // }
+
   return (dispatch) => {
     dispatch({
       type: 'UPDATE_SUBSCRIBED',
       user
     });
+    if (message) {
+      console.log(message);
+      dispatch({
+        type: 'ADD_NOTIFICATION',
+        notification: {
+          type: 'user',
+          message,
+          update,
+          time: new Date()
+        }
+      });
+    }
   };
 };
 
@@ -76,7 +110,12 @@ export const createTransaction = (transaction, token) => {
     headers: { Authorization: `bearer ${token}` }
   };
   return async (dispatch) => {
-    const res = await axios.post(transactUrl, transaction, config);
+    try {
+      const res = await axios.post(transactUrl, transaction, config);
+    } catch (err) {
+      console.error(err.response.data);
+      message.error(err.response.data.error.message);
+    }
     dispatch({
       type: 'OTHER'
       // type: 'NEW_TRANSACTION',
@@ -93,7 +132,8 @@ export const removeTransaction = (transaction, token) => {
         data: transaction
       });
     } catch (err) {
-      console.log(err.response);
+      console.error(err.response.data);
+      message.error(err.response.data.error.message);
     }
     dispatch({
       type: 'OTHER'

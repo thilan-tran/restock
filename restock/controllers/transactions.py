@@ -52,7 +52,11 @@ def buy_stock_asset():
 
         purchase = StockTransaction(shares=shares, asset=asset, purchase=True)
         db.session.commit()
-        socketio.emit('update', json.dumps(user.to_dict()), room=user.id)
+        socketio.emit('update', json.dumps({
+            'type': 'transaction',
+            'update': purchase.to_dict(),
+            'user' : user.to_dict()
+        }), room=user.id)
         return jsonify(purchase.to_dict()), 200
 
     return ErrorResponse('Authentication', 'Provide an authentication token.').to_json(), 401
@@ -90,7 +94,11 @@ def sell_stock_asset():
             db.session.delete(asset.aggregate)
         db.session.commit()
 
-        socketio.emit('update', json.dumps(user.to_dict()), room=user.id)
+        socketio.emit('update', json.dumps({
+            'type': 'transaction',
+            'update': transaction.to_dict(),
+            'user' : user.to_dict()
+        }), room=user.id)
         return jsonify(transaction.to_dict()), 200
 
     return ErrorResponse('Authentication', 'Provide an authentication token.').to_json(), 401

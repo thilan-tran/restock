@@ -60,7 +60,7 @@ class User(db.Model):
 
     def encode_auth_token(self):
         payload = {
-            'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=30),
+            # 'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=30),
             'iat': datetime.datetime.utcnow(),
             'id': self.id
         }

@@ -46,8 +46,11 @@ def get_stocks_by_query(query):
         symbol = query
 
     symbol_data = av_stocks_by_symbol(symbol)
+    if isinstance(symbol_data, str):
+        return ErrorResponse('Server', symbol_data).to_json(), 400
     if symbol_data:
         return jsonify(symbol_data), 200
+
     return ErrorResponse('Not Found', 'No such stock with symbol {}.'.format(symbol)).to_json(), 404
 
 @stocks.route('/search/<string:search>', methods=['GET'])

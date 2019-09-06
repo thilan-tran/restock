@@ -5,13 +5,11 @@ import { Link } from 'react-router-dom';
 import {
   Breadcrumb,
   Cascader,
-  Button,
-  Timeline,
   Avatar,
-  PageHeader,
   Card,
   Row,
   Col,
+  List,
   Statistic,
   Icon,
   Table,
@@ -22,35 +20,31 @@ import {
   Select
 } from 'antd';
 
-import {
-  AreaChart,
-  ScatterChart,
-  Scatter,
-  Area,
-  Tooltip as ChartTooltip,
-  XAxis,
-  YAxis,
-  LineChart,
-  Line,
-  ResponsiveContainer,
-  CartesianGrid
-} from 'recharts';
-import moment from 'moment';
-
+import { TimeAreaChart } from './Recharts';
+import { transactionColumns, portfolioColumns, trackingColumns } from './Table';
 import {
   initLeaderboard,
   addSubscribed,
   removeSubscribed
 } from '../actions/users';
 
+const getColor = (change) =>
+  change > 0 ? '#3f8600' : change === 0 ? '#595959' : '#cf1322';
+
+const getType = (change) =>
+  change > 0 ? 'arrow-up' : change === 0 ? 'line' : 'arrow-down';
+
 const BaseUserOverview = ({ user, history }) => {
   const [tab, setTab] = useState('overview');
 
   const dailyRecords = user.records.daily_records;
-  const latestValue = dailyRecords[dailyRecords.length - 1].value;
+  const lastValue =
+    dailyRecords.length > 1
+      ? dailyRecords[dailyRecords.length - 2].value
+      : dailyRecords[0].value;
 
-  const change = user.value - latestValue;
-  const percentChange = (change / latestValue) * 100;
+  const change = user.value - lastValue;
+  const percentChange = (change / lastValue) * 100;
 
   const monthlyRecords = user.records.monthly_records;
   const oldestValue = monthlyRecords[0].value;
@@ -83,39 +77,17 @@ const BaseUserOverview = ({ user, history }) => {
             value={change}
             precision={2}
             valueStyle={{
-              color:
-                change > 0 ? '#3f8600' : change === 0 ? '#595959' : '#cf1322'
+              color: getColor(change)
             }}
-            prefix={
-              <Icon
-                type={
-                  change > 0 ? 'arrow-up' : change === 0 ? 'line' : 'arrow-down'
-                }
-              />
-            }
+            prefix={<Icon type={getType(change)} />}
           />
           <Statistic
             value={percentChange}
             precision={4}
             valueStyle={{
-              color:
-                percentChange > 0
-                  ? '#3f8600'
-                  : percentChange === 0
-                  ? '#595959'
-                  : '#cf1322'
+              color: getColor(percentChange)
             }}
-            prefix={
-              <Icon
-                type={
-                  percentChange > 0
-                    ? 'arrow-up'
-                    : percentChange === 0
-                    ? 'line'
-                    : 'arrow-down'
-                }
-              />
-            }
+            prefix={<Icon type={getType(percentChange)} />}
             suffix="%"
           />
         </span>
@@ -127,47 +99,17 @@ const BaseUserOverview = ({ user, history }) => {
             value={overallChange}
             precision={2}
             valueStyle={{
-              color:
-                overallChange > 0
-                  ? '#3f8600'
-                  : overallChange === 0
-                  ? '#595959'
-                  : '#cf1322'
+              color: getColor(overallChange)
             }}
-            prefix={
-              <Icon
-                type={
-                  overallChange > 0
-                    ? 'arrow-up'
-                    : overallChange === 0
-                    ? 'line'
-                    : 'arrow-down'
-                }
-              />
-            }
+            prefix={<Icon type={getType(overallChange)} />}
           />
           <Statistic
             value={overallPercentChange}
             precision={4}
             valueStyle={{
-              color:
-                overallPercentChange > 0
-                  ? '#3f8600'
-                  : overallPercentChange === 0
-                  ? '#595959'
-                  : '#cf1322'
+              color: getColor(overallPercentChange)
             }}
-            prefix={
-              <Icon
-                type={
-                  overallPercentChange > 0
-                    ? 'arrow-up'
-                    : overallPercentChange === 0
-                    ? 'line'
-                    : 'arrow-down'
-                }
-              />
-            }
+            prefix={<Icon type={getType(overallPercentChange)} />}
             suffix="%"
           />
         </span>
@@ -175,253 +117,59 @@ const BaseUserOverview = ({ user, history }) => {
     </Row>
   );
 
-  const columns = [
-    {
-      title: 'Symbol',
-      dataIndex: 'symbol',
-      key: 'symbol',
-      render: (text) => <Link to={'/stocks/' + text}>{text.toUpperCase()}</Link>
-    },
-    {
-      title: 'Shares',
-      dataIndex: 'shares',
-      key: 'shares',
-      render: (text) => (
-        <Statistic value={text} prefix={<Icon type="pie-chart" />} />
-      )
-    },
-    {
-      title: 'Price',
-      dataIndex: 'price',
-      key: 'price',
-      render: (text) => (
-        <Statistic value={text} precision={2} prefix={<Icon type="dollar" />} />
-      )
-    },
-    {
-      title: 'Type',
-      key: 'type',
-      render: (text, record) => (
-        <span>
-          {record.short ? (
-            <Tooltip title="Short stocks increase in value if their price decreases.">
-              <Tag color="orange">short</Tag>
-            </Tooltip>
-          ) : (
-            <Tooltip title="Short stocks increase in value if their price decreases.">
-              <Tag color="purple">long</Tag>
-            </Tooltip>
-          )}
-          {record.purchase ? (
-            <Tag color="blue">buy</Tag>
-          ) : (
-            <Tag color="red">sell</Tag>
-          )}
-        </span>
-      )
-    },
-    {
-      title: 'Date',
-      dataIndex: 'timestamp',
-      key: 'timestamp'
-    }
-  ];
+  const transactColumns = transactionColumns(false);
+  transactColumns[0].filters = [
+    ...new Set(user.transactions.map((stock) => stock.symbol))
+  ].map((elem) => ({ text: elem.toUpperCase(), value: elem }));
 
   const transactions = user.transactions.length ? (
     <Table
-      pagination={{ pageSize: 4 }}
-      columns={columns}
+      pagination={{ pageSize: 10, size: 'small' }}
+      columns={transactColumns}
       dataSource={user.transactions}
       rowKey={(record) => record.id}
+      scroll={{ y: 300 }}
     />
   ) : (
-    <Empty />
+    <Empty description="No stock transaction history." />
   );
 
-  const portfolioColumns = [
-    {
-      title: 'Symbol',
-      dataIndex: 'symbol',
-      key: 'symbol',
-      render: (text) => <Link to={'/stocks/' + text}>{text.toUpperCase()}</Link>
-    },
-    {
-      title: 'Total Shares',
-      dataIndex: 'shares',
-      key: 'shares',
-      render: (text) => (
-        <Statistic value={text} prefix={<Icon type="pie-chart" />} />
-      )
-    },
-    {
-      title: 'Daily Price Change',
-      dataIndex: 'current_price',
-      key: 'currentPrice',
-      render: (text, record) => {
-        // const prevTimestamp = new Date(
-        //   record.prev_timestamp.split(' ')[0] +
-        //     'T' +
-        //     record.prev_timestamp.split(' ')[1]
-        // );
-        // const timestamp = new Date(
-        //   record.timestamp.split(' ')[0] + 'T' + record.timestamp.split(' ')[1]
-        // );
-
-        // const priceChange =
-        //   timestamp >= prevTimestamp
-        //     ? 0
-        //     : record.current_price - record.prev_price;
-
-        const priceChange = record.current_price - record.prev_price;
-
-        return (
-          <span>
-            <Statistic
-              value={text}
-              precision={2}
-              prefix={<Icon type="dollar" />}
-            />
-            <Statistic
-              value={priceChange}
-              precision={2}
-              valueStyle={{
-                color:
-                  priceChange > 0
-                    ? '#3f8600'
-                    : priceChange === 0
-                    ? '#595959'
-                    : '#cf1322'
-              }}
-              prefix={
-                <Icon
-                  type={
-                    priceChange > 0
-                      ? 'arrow-up'
-                      : priceChange === 0
-                      ? 'line'
-                      : 'arrow-down'
-                  }
-                />
-              }
-            />
-          </span>
-        );
-      }
-    },
-    {
-      title: 'Overall Change',
-      key: 'change',
-      render: (text, record) => {
-        // const prevTimestamp = new Date(
-        //   record.prev_timestamp.split(' ')[0] +
-        //     'T' +
-        //     record.prev_timestamp.split(' ')[1]
-        // );
-        // const timestamp = new Date(
-        //   record.timestamp.split(' ')[0] + 'T' + record.timestamp.split(' ')[1]
-        // );
-
-        // const initPrice =
-        //   timestamp >= prevTimestamp
-        //     ? 0
-        //     : record.current_price - record.prev_price;
-
-        // const initPrice = record.current_price - record.prev_price;
-        // const priceChange = record.short ? -1 * initPrice : initPrice;
-
-        // const change = priceChange * record.shares;
-        // const percentChange = (priceChange / record.current_price) * 100;
-
-        let change = record.current_price * record.shares - record.init_value;
-        change = record.short ? -1 * change : change;
-        const percentChange = (change / record.init_value) * 100;
-
-        return (
-          <span>
-            <Statistic
-              value={change}
-              precision={2}
-              valueStyle={{
-                color:
-                  change > 0 ? '#3f8600' : change === 0 ? '#595959' : '#cf1322'
-              }}
-              prefix={
-                <Icon
-                  type={
-                    change > 0
-                      ? 'arrow-up'
-                      : change === 0
-                      ? 'line'
-                      : 'arrow-down'
-                  }
-                />
-              }
-            />
-            <Statistic
-              value={percentChange}
-              precision={4}
-              valueStyle={{
-                color:
-                  percentChange > 0
-                    ? '#3f8600'
-                    : percentChange === 0
-                    ? '#595959'
-                    : '#cf1322'
-              }}
-              prefix={
-                <Icon
-                  type={
-                    percentChange > 0
-                      ? 'arrow-up'
-                      : percentChange === 0
-                      ? 'line'
-                      : 'arrow-down'
-                  }
-                />
-              }
-              suffix="%"
-            />
-          </span>
-        );
-      }
-    },
-    {
-      title: 'Type',
-      key: 'type',
-      render: (text, record) =>
-        record.short ? (
-          <Tooltip title="Short stocks increase in value if their price decreases.">
-            <Tag color="orange">short</Tag>
-          </Tooltip>
-        ) : (
-          <Tooltip title="Long stocks increase in value if their price increases.">
-            <Tag color="purple">long</Tag>
-          </Tooltip>
-        )
-    }
-  ];
+  const portColumns = portfolioColumns(false);
+  portColumns[0].filters = [
+    ...new Set(user.portfolio.map((stock) => stock.symbol))
+  ].map((elem) => ({ text: elem.toUpperCase(), value: elem }));
 
   const portfolio = user.portfolio.length ? (
     <Table
-      pagination={{ pageSize: 4 }}
-      columns={portfolioColumns}
+      pagination={{ pageSize: 10, size: 'small' }}
+      columns={portColumns}
       dataSource={user.portfolio}
       rowKey={(record) => record.id}
+      scroll={{ y: 300 }}
     />
   ) : (
-    <Empty />
+    <Empty description="No purchased stocks." />
   );
 
-  const tracking = (
-    <LineChart width={300} height={100} data={user.records.latest_records}>
-      <Line type="monotone" dataKey="value" />
-    </LineChart>
+  const trackColumns = trackingColumns();
+
+  const tracking = user.tracking.length ? (
+    <Table
+      pagination={{ pageSize: 10, size: 'small' }}
+      columns={trackColumns}
+      dataSource={user.tracking}
+      rowKey={(record) => record.symbol}
+      scroll={{ y: 300 }}
+    />
+  ) : (
+    <Empty description="Track stocks for real-time notifications." />
   );
 
   const tabs = {
     overview,
     portfolio,
-    transactions
+    transactions,
+    tracking
   };
 
   return (
@@ -432,6 +180,7 @@ const BaseUserOverview = ({ user, history }) => {
           { tab: 'Overview', key: 'overview' },
           { tab: 'Portfolio', key: 'portfolio' },
           { tab: 'Transactions', key: 'transactions' },
+          { tab: 'Tracking', key: 'tracking' },
           { tab: 'Details', key: 'details' }
         ]}
         activeTabKey={tab}
@@ -464,13 +213,7 @@ const mapStateToProps = (state) => ({
 
 const mapDispatchToProps = { addSubscribed, removeSubscribed, initLeaderboard };
 
-const BaseUserView = ({
-  id,
-  addSubscribed,
-  removeSubscribed,
-  subscribed,
-  socket
-}) => {
+const BaseUserView = ({ id, addSubscribed, removeSubscribed, subscribed }) => {
   const [tab, setTab] = useState('0');
   const [option, setOption] = useState('value');
 
@@ -483,23 +226,7 @@ const BaseUserView = ({
   }, []);
 
   const user = subscribed.find((u) => u.id === id);
-  if (!user) return <p>loading...</p>;
-
-  // const stocks = user.portfolio.map((s) => {
-  //   console.log(s);
-  //   const change = s.shares * (s.current_price - s.init_price);
-  //   const percentChange = change / (s.shares * s.init_price);
-
-  //   return (
-  //     <p key={s.id}>
-  //       {s.shares}{' '}
-  //       <Link to={'/stocks/' + s.symbol}>{s.symbol.toUpperCase()}</Link>{' '}
-  //       {s.short ? 'short' : 'stock'} bought for ${s.init_price}, now $
-  //       {s.current_price} at {s.timestamp} Change: ${change.toFixed(2)}{' '}
-  //       {percentChange.toFixed(4)}%
-  //     </p>
-  //   );
-  // });
+  if (!user) return <Skeleton active />;
 
   const mapTimestamp = (record) => ({
     ...record,
@@ -542,6 +269,7 @@ const BaseUserView = ({
   return (
     <div>
       <UserOverview user={user} />
+
       <Col span={24} style={{ padding: '8px' }}>
         <Card
           title="HISTORY"
@@ -559,57 +287,11 @@ const BaseUserView = ({
             </Select>
           }
         >
-          <ResponsiveContainer width="100%" height={400}>
-            <AreaChart data={records[Number(tab)]}>
-              <CartesianGrid strokeDasharray="5 5" vertical={false} />
-              <XAxis
-                type="number"
-                padding={{ right: 15 }}
-                name="Time"
-                dataKey="time"
-                axisLine={false}
-                tickLine={false}
-                tickCount={10}
-                interval={0}
-                domain={['dataMin', 'dataMax']}
-                tickFormatter={(time) =>
-                  Number(tab) <= 1
-                    ? moment(time).format('HH:mm')
-                    : moment(time)
-                        .format('ddd HH:mm')
-                        .toUpperCase()
-                }
-              />
-              <YAxis
-                width={80}
-                type="number"
-                tickLine={false}
-                interval={0}
-                domain={[
-                  (dataMin) => dataMin * 0.96,
-                  (dataMax) => dataMax * 1.02
-                ]}
-                tickFormatter={(val) => '$' + val.toFixed(0)}
-              />
-              <ChartTooltip
-                separator=" "
-                formatter={(val, name) => ['$' + val, name.toUpperCase()]}
-                labelFormatter={(val) =>
-                  moment(val)
-                    .format('ddd HH:mm')
-                    .toUpperCase()
-                }
-              />
-              <Area
-                type="monotone"
-                dataKey={option}
-                fill="#ccc"
-                dot={false}
-                activeDot={{ r: 8, strokeWidth: 2 }}
-                strokeWidth={4}
-              />
-            </AreaChart>
-          </ResponsiveContainer>
+          <TimeAreaChart
+            type={Number(tab)}
+            data={records[Number(tab)]}
+            dataKey={option}
+          />
         </Card>
       </Col>
     </div>
@@ -622,9 +304,10 @@ export const UserView = connect(
 )(BaseUserView);
 
 const BaseLeaderboard = (props) => {
-  // useEffect(() => {
-  //   props.initLeaderboard();
-  // }, []);
+  useEffect(() => {
+    props.initLeaderboard();
+  }, []);
+
   const [option, setOption] = useState(['value', 'decreasing']);
 
   if (!props.subscribed.length) return <Skeleton active />;
@@ -724,9 +407,13 @@ const BaseLeaderboard = (props) => {
           />
         </Col>
       </Row>
-      {sorted.map((u) => (
-        <UserOverview key={u.id} user={u} />
-      ))}
+      <List
+        itemLayout="vertical"
+        size="large"
+        pagination={{ pageSize: 10 }}
+        dataSource={sorted}
+        renderItem={(user) => <UserOverview key={user.id} user={user} />}
+      />
     </div>
   );
 };

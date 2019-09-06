@@ -132,4 +132,7 @@ def av_stocks_by_symbol(symbol):
             'day_data': day_data
         }
 
+    if intraday.get('Note'):
+        return 'Number of requests per minute exceeded.'
+
     return None

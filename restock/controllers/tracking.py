@@ -1,6 +1,7 @@
+import json
 from flask import Blueprint, jsonify, request
 
-from restock import db
+from restock import db, socketio
 from restock.models.user import User
 from restock.models.stock import StockAggregate, TrackedStock
 from restock.utils.errors import ErrorResponse
@@ -52,6 +53,12 @@ def add_new_tracking():
         return ErrorResponse('Tracking', 'Already tracking symbol {}'.format(symbol)).to_json(), 401
 
     db.session.commit()
+    if user:
+        socketio.emit('update', json.dumps({
+            'type': 'tracking',
+            'update': tracked.to_dict(),
+            'user' : user.to_dict()
+        }), room=user.id)
     return jsonify(tracked.to_dict()), 200
 
 @tracking.route('/', methods=['DELETE'])
@@ -79,8 +86,13 @@ def delete_tracking():
         if not aggr.tracking and not aggr.assets:
             db.session.delete(aggr)
         db.session.commit()
+        if user:
+            socketio.emit('update', json.dumps({
+                'type': 'untracking',
+                'update': { 'symbol': symbol, 'user': user.username },
+                'user' : user.to_dict()
+            }), room=user.id)
         return jsonify({}), 204
-
 
     return ErrorResponse('Not Found',
                          'No tracking with symbol {} exists.'.format(symbol)).to_json(), 404

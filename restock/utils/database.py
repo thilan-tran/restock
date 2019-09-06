@@ -32,7 +32,11 @@ def update_all_stocks():
             affected_users = list({ asset.user.id for asset in symbol.assets })
             for id in affected_users:
                 user = User.query.get(id)
-                socketio.emit('update', json.dumps(user.to_dict()), room=id)
+                socketio.emit('update', json.dumps({
+                    'type': 'update',
+                    'update': None,
+                    'user': user.to_dict()
+                }), room=id);
 
             if symbol.tracking:
                 socketio.emit('update_tracking', json.dumps({ 'symbol': symbol.symbol, 'price': new_price }), room=symbol.symbol)

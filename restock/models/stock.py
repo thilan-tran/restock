@@ -106,6 +106,7 @@ class StockAsset(db.Model):
             'shares': self.shares,
             'short': self.is_short,
             'user': self.user.username,
+            'user_id': self.user.id,
             'timestamp': '{:%Y-%m-%d %H:%M}'.format(self.timestamp),
             'prev_timestamp': '{:%Y-%m-%d %H:%M}'.format(self.aggregate.prev_timestamp),
             'id': self.id
@@ -192,6 +193,7 @@ class StockTransaction(db.Model):
             'short': self.is_short,
             'purchase': self.is_purchase,
             'user': self.user.username,
+            'user_id': self.user.id,
             'timestamp': '{:%Y-%m-%d %H:%M}'.format(self.timestamp),
             'id': self.id
         }
@@ -248,6 +250,7 @@ class TrackedStock(db.Model):
             'price': self.aggregate.current_price,
             'ask_size': self.aggregate.ask_size,
             'user': self.user.username if self.user else 'None',
+            'user_id': self.user.id if self.user else 'None',
             'timestamp': '{:%Y-%m-%d %H:%M}'.format(self.timestamp),
             'id': self.id
         }

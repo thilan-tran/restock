@@ -33,9 +33,9 @@ socket.on('leaderboard', (data) => {
 });
 
 socket.on('update', (data) => {
-  const user = JSON.parse(data);
-  console.log(user);
-  store.dispatch(updateSubscribed(user));
+  const jsonData = JSON.parse(data);
+  console.log(jsonData);
+  store.dispatch(updateSubscribed(jsonData));
 });
 
 // socket.on('init_tracking', (data) => {

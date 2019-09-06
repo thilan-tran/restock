@@ -4,8 +4,11 @@ const initState = {
     userId: ''
   },
   leaderboard: [],
+  userTracking: [],
   subscribed: [],
   tracking: [],
+  notifications: [],
+  leaderboardInitialized: false,
   overviewInitialized: false
 };
 
@@ -55,6 +58,22 @@ const usersReducer = (state = initState, action) => {
         return { ...state, tracking: state.tracking.concat(action.tracking) };
       return state;
 
+    case 'ADD_USER_TRACKING':
+      if (!state.userTracking.includes(action.symbol))
+        return {
+          ...state,
+          userTracking: state.userTracking.concat(action.symbol)
+        };
+      return state;
+
+    case 'REMOVE_USER_TRACKING':
+      return {
+        ...state,
+        userTracking: state.userTracking.filter(
+          (symbol) => symbol !== action.symbol
+        )
+      };
+
     case 'UPDATE_TRACKING':
       return {
         ...state,
@@ -78,6 +97,18 @@ const usersReducer = (state = initState, action) => {
       return {
         ...state,
         overviewInitialized: true
+      };
+
+    case 'LEADERBOARD_INIT':
+      return {
+        ...state,
+        leaderboardInitialized: true
+      };
+
+    case 'ADD_NOTIFICATION':
+      return {
+        ...state,
+        notifications: state.notifications.concat(action.notification)
       };
 
     // case 'NEW_TRANSACTION':

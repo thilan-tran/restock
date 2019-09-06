@@ -27,3 +27,12 @@ def get_user_by_id(id):
         return jsonify(user.to_dict()), 200
     return ErrorResponse('Not Found',
                          'No user with ID {} exists.'.format(id)).to_json(), 404
+
+@users.route('/search/<string:search>', methods=['GET'])
+def get_users_by_search(search):
+    serialized = []
+    users = User.query.all()
+    for user in users:
+        if search in user.username:
+            serialized.append({ 'username': user.username, 'id': user.id })
+    return jsonify(serialized), 200

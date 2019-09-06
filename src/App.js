@@ -16,7 +16,7 @@ const { Header, Content, Footer } = Layout;
 const BaseApp = (props) => {
   useEffect(() => {
     props.checkCachedUser();
-    props.initLeaderboard();
+    // props.initLeaderboard();
   }, []);
 
   return (

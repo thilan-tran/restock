@@ -1,17 +1,18 @@
 import React from 'react';
-import { Route, Link } from 'react-router-dom';
+import { Switch, Route, Link } from 'react-router-dom';
 
 import { Breadcrumb } from 'antd';
 
 import { StockList, StockSearch, StockView } from './Stock';
+import { NotificationView } from './Notification';
 import { Leaderboard, UserView } from './User';
 import { Login, Register } from './Auth';
 
 export const Routes = () => (
-  <div>
+  <Switch>
     <Route
       exact
-      path="/"
+      path="/stocks"
       render={() => (
         <div>
           <StockList />
@@ -20,7 +21,7 @@ export const Routes = () => (
     />
     <Route
       exact
-      path="/stocks"
+      path="/stocks/search"
       render={() => (
         <div>
           <Breadcrumb style={{ margin: '16px' }}>
@@ -68,6 +69,20 @@ export const Routes = () => (
     />
     <Route
       exact
+      path="/notifications"
+      render={() => (
+        <div>
+          <Breadcrumb style={{ margin: '16px' }}>
+            <Breadcrumb.Item>
+              <Link to="/users">Notifications</Link>
+            </Breadcrumb.Item>
+          </Breadcrumb>
+          <NotificationView />
+        </div>
+      )}
+    />
+    <Route
+      exact
       path="/login"
       render={() => (
         <div>
@@ -96,5 +111,5 @@ export const Routes = () => (
         </div>
       )}
     />
-  </div>
+  </Switch>
 );
