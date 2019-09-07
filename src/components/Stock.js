@@ -26,6 +26,7 @@ import {
   Spin
 } from 'antd';
 
+import { baseMenu } from './Routes';
 import { ValueAreaChart } from './Recharts';
 import { portfolioColumns, transactionColumns } from './Table';
 import StockService from '../services/StockService';
@@ -50,8 +51,8 @@ const BaseStockOverview = ({
 
   const onClick = () => {
     tracked
-      ? removeTracking(stock.symbol.toLowerCase(), auth.token)
-      : addTracking(stock.symbol.toLowerCase(), auth.token);
+      ? removeTracking(stock.symbol.toLowerCase(), true)
+      : addTracking(stock.symbol.toLowerCase(), null, true);
   };
 
   return (
@@ -327,7 +328,16 @@ const BaseStockView = (props) => {
       })
       .catch((err) => {
         console.error(err.response);
-        message.error('Requests exceeded, please try again in 10 seconds.', 10);
+        if (err.response.status === 400) {
+          message.error(
+            'Requests exceeded, please try again in 10 seconds.',
+            10
+          );
+          props.history.goBack();
+        } else if (err.response.status === 404) {
+          message.error(`No such stock with symbol ${props.symbol}.`, 10);
+          props.history.goBack();
+        }
       });
 
     return () => {
@@ -503,13 +513,23 @@ const BaseStockView = (props) => {
   );
 };
 
-export const StockView = connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(BaseStockView);
+export const StockView = withRouter(
+  connect(
+    mapStateToProps,
+    mapDispatchToProps
+  )(BaseStockView)
+);
 
 const StockListSkeleton = () => (
   <div>
+    <Row type="flex" align="middle">
+      <Col span={20}>
+        <Breadcrumb style={{ margin: '16px' }}>
+          <Breadcrumb.Item overlay={baseMenu}>Stocks</Breadcrumb.Item>
+          <Breadcrumb.Item>Market Overview</Breadcrumb.Item>
+        </Breadcrumb>
+      </Col>
+    </Row>
     {[...Array(12).keys()].map((elem) => (
       <Col
         key={elem}
@@ -613,9 +633,7 @@ const BaseStockList = (props) => {
       <Row type="flex" align="middle">
         <Col span={20}>
           <Breadcrumb style={{ margin: '16px' }}>
-            <Breadcrumb.Item>
-              <Link to="/stocks">Stocks</Link>
-            </Breadcrumb.Item>
+            <Breadcrumb.Item overlay={baseMenu}>Stocks</Breadcrumb.Item>
             <Breadcrumb.Item>Market Overview</Breadcrumb.Item>
           </Breadcrumb>
         </Col>
@@ -652,7 +670,7 @@ export const StockSearch = () => {
       <Row type="flex" justify="center">
         <Col span={16} style={{ margin: '25px' }}>
           <Input.Search
-            placeholder="Search"
+            placeholder="Search Stocks"
             size="large"
             onSearch={handleSearch}
           />

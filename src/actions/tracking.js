@@ -38,25 +38,27 @@ export const initTracking = (data) => {
   };
 };
 
-export const addTracking = (symbol, prevPrice, token = null) => {
-  const config = {
-    headers: { Authorization: token ? `bearer ${token}` : '' }
-  };
-
+export const addTracking = (symbol, prevPrice = null, saveUser = false) => {
   return async (dispatch, getState, socket) => {
+    const state = getState();
+    const token = state.auth.token;
+
+    const config = {
+      headers: { Authorization: saveUser && token ? `bearer ${token}` : '' }
+    };
+
     try {
       const res = await axios.post(
         trackingUrl,
-        { symbol, prev_price: prevPrice },
+        prevPrice ? { symbol, prev_price: prevPrice } : { symbol },
         config
       );
-      console.log(res);
       socket.emit('track', symbol);
       dispatch({
         type: 'ADD_TRACKING',
         tracking: res.data
       });
-      if (token) {
+      if (saveUser) {
         dispatch({
           type: 'ADD_USER_TRACKING',
           symbol
@@ -64,36 +66,13 @@ export const addTracking = (symbol, prevPrice, token = null) => {
       }
     } catch (err) {
       console.error(err.response.data);
-      message.error(err.response.data.error.message);
+      // message.error(err.response.data.error.message);
     }
   };
 };
 
-// export const addTempTracking = (symbol) => {
-//   return async (dispatch, getState, socket) => {
-//     try {
-//       const res = await axios.post(trackingUrl, { symbol });
-//       console.log(res);
-//       socket.emit('track', symbol);
-//       dispatch({
-//         type: 'ADD_TRACKING',
-//         tracking: res.data
-//       });
-//     } catch (err) {
-//       console.error(err.response.data);
-//       message.error(err.response.data.error.message);
-//     }
-//   };
-// };
-
-export const updateTracking = (symbol, price) => {
+export const updateTracking = (symbol, price, prevPrice) => {
   const message = `${symbol.toUpperCase()} updated to $${price}`;
-  // notification.open({
-  //   message: 'Stock Update',
-  //   description: `${symbol.toUpperCase()} updated to $${price}`,
-  //   icon: <Icon type="stock" style={{ color: '#108ee9' }} />,
-  //   duration: 6
-  // });
   return (dispatch) => {
     dispatch({
       type: 'UPDATE_TRACKING',
@@ -102,35 +81,45 @@ export const updateTracking = (symbol, price) => {
     });
     dispatch({
       type: 'ADD_NOTIFICATION',
-      notifiation: {
+      notification: {
         type: 'stock',
         message,
-        time: new Date()
+        symbol,
+        price,
+        prevPrice,
+        timestamp: new Date()
       }
     });
   };
 };
 
-export const removeTracking = (symbol, token = null) => {
+export const removeTracking = (symbol, clearUser = false) => {
   return async (dispatch, getState, socket) => {
     const state = getState();
+    const token = state.auth.token;
+
     try {
       const res = await axios.delete(trackingUrl, {
-        headers: { Authorization: token ? `bearer ${token}` : '' },
+        headers: {
+          Authorization: clearUser && token ? `bearer ${token}` : ''
+        },
         data: { symbol }
       });
-      if (!token) {
-        socket.emit('untrack', symbol);
-        dispatch({
-          type: 'REMOVE_TRACKING',
-          symbol
-        });
+
+      if (!clearUser) {
+        if (!state.userTracking.includes(symbol)) {
+          socket.emit('untrack', symbol);
+          dispatch({
+            type: 'REMOVE_TRACKING',
+            symbol
+          });
+        }
       } else {
         dispatch({ type: 'REMOVE_USER_TRACKING', symbol });
       }
     } catch (err) {
       console.error(err.response.data);
-      message.error(err.response.data.error.message);
+      // message.error(err.response.data.error.message);
     }
   };
 };

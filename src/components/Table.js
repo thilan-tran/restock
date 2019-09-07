@@ -1,6 +1,78 @@
+import moment from 'moment';
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Statistic, Icon, Tag, Tooltip } from 'antd';
+
+export const simpleColumns = () => {
+  const symbol = {
+    title: 'Symbol',
+    dataIndex: 'symbol',
+    key: 'symbol',
+    width: '25%',
+    onFilter: (value, record) => record.symbol === value,
+    render: (text) => <Link to={'/stocks/' + text}>{text.toUpperCase()}</Link>
+  };
+
+  const price = {
+    title: 'Price',
+    dataIndex: 'price',
+    sorter: (a, b) => a.price - b.price,
+    sortDirections: ['descend', 'ascend'],
+    width: '25%',
+    render: (text) => (
+      <Statistic value={text} precision={2} prefix={<Icon type="dollar" />} />
+    )
+  };
+
+  const priceChange = {
+    title: 'Change',
+    key: 'priceChange',
+    sorter: (a, b) => a.price - a.prevPrice - (b.price - b.prevPrice),
+    sortDirections: ['descend', 'ascend'],
+    width: '25%',
+    render: (text, record) => {
+      const priceChange = record.price - record.prevPrice;
+
+      return (
+        <Statistic
+          value={priceChange}
+          precision={2}
+          valueStyle={{
+            color:
+              priceChange > 0
+                ? '#3f8600'
+                : priceChange === 0
+                ? '#595959'
+                : '#cf1322'
+          }}
+          prefix={
+            <Icon
+              type={
+                priceChange > 0
+                  ? 'arrow-up'
+                  : priceChange === 0
+                  ? 'line'
+                  : 'arrow-down'
+              }
+            />
+          }
+        />
+      );
+    }
+  };
+
+  const time = {
+    title: 'Time',
+    dataIndex: 'timestamp',
+    key: 'timestamp',
+    sorter: (a, b) => a.timestamp - b.timestamp,
+    sortDirections: ['descend', 'ascend'],
+    defaultSortOrder: 'descend',
+    render: (time) => <p>{moment(time.getTime()).fromNow()}</p>
+  };
+
+  return [symbol, price, priceChange, time];
+};
 
 export const trackingColumns = () => {
   const symbol = {

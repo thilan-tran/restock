@@ -34,5 +34,5 @@ def get_users_by_search(search):
     users = User.query.all()
     for user in users:
         if search in user.username:
-            serialized.append({ 'username': user.username, 'id': user.id })
+            serialized.append({ 'username': user.username, 'id': user.id, 'value': user.value, 'balance': user.balance })
     return jsonify(serialized), 200

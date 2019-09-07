@@ -14,15 +14,21 @@ const BaseNavbar = ({ auth }) => {
       style={{ textAlign: 'right' }}
       selectedKeys={[]}
     >
-      <Menu.Item>
-        <Link to={'/users/' + auth.userId}>
-          <Icon type="user" />
-          Me
-        </Link>
-      </Menu.Item>
-      <Menu.Item>
-        <Logout />
-      </Menu.Item>
+      <Menu.SubMenu
+        title={
+          <span>
+            <Icon type="user" />
+            {auth.username}
+          </span>
+        }
+      >
+        <Menu.Item>
+          <Link to={'/users/' + auth.userId}>Overview</Link>
+        </Menu.Item>
+        <Menu.Item>
+          <Logout />
+        </Menu.Item>
+      </Menu.SubMenu>
     </Menu>
   );
 
@@ -33,9 +39,21 @@ const BaseNavbar = ({ auth }) => {
       style={{ textAlign: 'right' }}
       selectedKeys={[]}
     >
-      <Menu.Item>
-        <Link to="/login">Login</Link>
-      </Menu.Item>
+      <Menu.SubMenu
+        title={
+          <span>
+            <Icon type="login" />
+            Login
+          </span>
+        }
+      >
+        <Menu.Item>
+          <Link to="/login">Login</Link>
+        </Menu.Item>
+        <Menu.Item>
+          <Link to="/register">Register</Link>
+        </Menu.Item>
+      </Menu.SubMenu>
     </Menu>
   );
 
@@ -46,15 +64,44 @@ const BaseNavbar = ({ auth }) => {
           <Menu.Item disabled>
             <div style={{ fontSize: '20px', color: '#1890ff' }}>Restock</div>
           </Menu.Item>
-          <Menu.Item key="home">
-            <Link to="/stocks">Home</Link>
-          </Menu.Item>
-          <Menu.SubMenu title="Users">
+
+          <Menu.SubMenu
+            title={
+              <span>
+                <Icon type="home" />
+                Home
+              </span>
+            }
+          >
+            <Menu.Item key="home">
+              <Link to="/stocks">Market Overview</Link>
+            </Menu.Item>
+          </Menu.SubMenu>
+
+          <Menu.SubMenu
+            title={
+              <span>
+                <Icon type="usergroup-add" />
+                Users
+              </span>
+            }
+          >
             <Menu.Item>
               <Link to="/users">Leaderboard</Link>
             </Menu.Item>
+            <Menu.Item>
+              <Link to="/users/search">Search</Link>
+            </Menu.Item>
           </Menu.SubMenu>
-          <Menu.SubMenu title="Stocks">
+
+          <Menu.SubMenu
+            title={
+              <span>
+                <Icon type="stock" />
+                Stocks
+              </span>
+            }
+          >
             <Menu.Item>
               <Link to="/stocks">Market Overview</Link>
             </Menu.Item>
@@ -62,9 +109,22 @@ const BaseNavbar = ({ auth }) => {
               <Link to="/stocks/search">Search</Link>
             </Menu.Item>
           </Menu.SubMenu>
-          <Menu.Item>
-            <Link to="/notifications">Notifications</Link>
-          </Menu.Item>
+
+          <Menu.SubMenu
+            title={
+              <span>
+                <Icon type="notification" />
+                Notifications
+              </span>
+            }
+          >
+            <Menu.Item>
+              <Link to="/notifications/users">Users</Link>
+            </Menu.Item>
+            <Menu.Item>
+              <Link to="/notifications/stocks">Stocks</Link>
+            </Menu.Item>
+          </Menu.SubMenu>
         </Menu>
       </Col>
       <Col span={4}>{auth.token ? loggedIn : loggedOut}</Col>

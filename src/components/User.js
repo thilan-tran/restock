@@ -11,6 +11,7 @@ import {
   Col,
   List,
   Statistic,
+  Input,
   Icon,
   Table,
   Tag,
@@ -20,6 +21,7 @@ import {
   Select
 } from 'antd';
 
+import { baseMenu } from './Routes';
 import { TimeAreaChart } from './Recharts';
 import { transactionColumns, portfolioColumns, trackingColumns } from './Table';
 import {
@@ -27,6 +29,7 @@ import {
   addSubscribed,
   removeSubscribed
 } from '../actions/users';
+import StockService from '../services/StockService';
 
 const getColor = (change) =>
   change > 0 ? '#3f8600' : change === 0 ? '#595959' : '#cf1322';
@@ -310,7 +313,27 @@ const BaseLeaderboard = (props) => {
 
   const [option, setOption] = useState(['value', 'decreasing']);
 
-  if (!props.subscribed.length) return <Skeleton active />;
+  if (!props.subscribed.length)
+    return (
+      <div>
+        <Row type="flex" align="middle">
+          <Col span={20}>
+            <Breadcrumb style={{ margin: '16px' }}>
+              <Breadcrumb.Item overlay={baseMenu}>Users</Breadcrumb.Item>
+              <Breadcrumb.Item>Leaderboard</Breadcrumb.Item>
+            </Breadcrumb>
+          </Col>
+          <Col span={4}>
+            <Cascader
+              options={options}
+              onChange={(val) => setOption(val)}
+              placeholder="Sort by"
+              style={{ width: '100%' }}
+            />
+          </Col>
+        </Row>
+      </div>
+    );
 
   const options = [
     {
@@ -392,9 +415,7 @@ const BaseLeaderboard = (props) => {
       <Row type="flex" align="middle">
         <Col span={20}>
           <Breadcrumb style={{ margin: '16px' }}>
-            <Breadcrumb.Item>
-              <Link to="/users">Users</Link>
-            </Breadcrumb.Item>
+            <Breadcrumb.Item overlay={baseMenu}>Users</Breadcrumb.Item>
             <Breadcrumb.Item>Leaderboard</Breadcrumb.Item>
           </Breadcrumb>
         </Col>
@@ -422,3 +443,61 @@ export const Leaderboard = connect(
   mapStateToProps,
   mapDispatchToProps
 )(BaseLeaderboard);
+
+export const UserSearch = () => {
+  const [searchData, setData] = useState([]);
+
+  const handleSearch = (search) => {
+    StockService.getUserSearch(search).then((data) => setData(data));
+  };
+
+  return (
+    <div>
+      <Row type="flex" justify="center">
+        <Col span={16} style={{ margin: '25px' }}>
+          <Input.Search
+            placeholder="Search Usernames"
+            size="large"
+            onSearch={handleSearch}
+          />
+        </Col>
+      </Row>
+      {searchData.length ? (
+        searchData.map((result) => (
+          <Col
+            key={result.id}
+            xs={24}
+            sm={24}
+            md={12}
+            lg={8}
+            xl={8}
+            style={{ padding: '8px' }}
+          >
+            <Link to={'/users/' + result.id}>
+              <Card title={result.username} hoverable>
+                <Col span={12}>
+                  <Statistic
+                    title="Balance"
+                    value={result.balance}
+                    precision={2}
+                    prefix={<Icon type="dollar" />}
+                  />
+                </Col>
+                <Col span={12}>
+                  <Statistic
+                    title="Value"
+                    value={result.value}
+                    precision={2}
+                    prefix={<Icon type="dollar" />}
+                  />
+                </Col>
+              </Card>
+            </Link>
+          </Col>
+        ))
+      ) : (
+        <Empty style={{ marginTop: '150px' }} />
+      )}
+    </div>
+  );
+};

@@ -1,11 +1,75 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { connect } from 'react-redux';
 
-import { Col, Table, Empty, Card } from 'antd';
+import { Row, Col, Table, Empty, Card, Select } from 'antd';
 
-import { transactionColumns } from './Table';
+import { simpleColumns, transactionColumns } from './Table';
 
-const BaseNotificationView = (props) => {
+const BaseStockNotifications = (props) => {
+  const [option, setOption] = useState('tracking');
+
+  const stockNotifications = props.notifications.filter(
+    (notif) => notif.type === 'stock'
+  );
+
+  const trackedNotifications = props.notifications.filter(
+    (notif) =>
+      notif.type === 'stock' && props.userTracking.includes(notif.symbol)
+  );
+
+  const filtered =
+    option === 'tracking' ? trackedNotifications : stockNotifications;
+
+  const simpColumns = simpleColumns();
+  simpColumns[0].filters = [
+    ...new Set(filtered.map((stock) => stock.symbol))
+  ].map((elem) => ({ text: elem.toUpperCase(), value: elem }));
+
+  const tracking = stockNotifications.length ? (
+    <Table
+      pagination={{ pageSize: 20, size: 'small' }}
+      columns={simpColumns}
+      dataSource={filtered}
+      rowKey={(record) => record.timestamp + record.message}
+      scroll={{ y: 550 }}
+    />
+  ) : (
+    <Empty
+      description="No recent stock updates."
+      style={{ marginTop: '150px' }}
+    />
+  );
+
+  return (
+    <Card
+      title="STOCKS"
+      style={{ height: '700px', padding: '8px' }}
+      extra={
+        <Select
+          defaultValue={option}
+          onChange={(val) => setOption(val)}
+          style={{ width: '160px' }}
+        >
+          <Select.Option value="tracking">Tracked Updates</Select.Option>
+          <Select.Option value="all">All Updates</Select.Option>
+        </Select>
+      }
+    >
+      {tracking}
+    </Card>
+  );
+};
+
+const mapStateToProps = (state) => ({
+  notifications: state.notifications,
+  userTracking: state.userTracking
+});
+
+export const StockNotifications = connect(mapStateToProps)(
+  BaseStockNotifications
+);
+
+const BaseUserNotifications = (props) => {
   const userNotifications = props.notifications
     .filter((notif) => notif.type === 'user')
     .map((elem) => elem.update);
@@ -28,32 +92,22 @@ const BaseNotificationView = (props) => {
       columns={transactColumns}
       dataSource={userNotifications}
       rowKey={(record) => record.id}
-      scroll={{ y: 300 }}
+      scroll={{ y: 550 }}
     />
   ) : (
-    <Empty />
+    <Empty
+      description="No recent transactions."
+      style={{ marginTop: '150px' }}
+    />
   );
 
   return (
-    <div>
-      <Col span={12} style={{ padding: '8px' }}>
-        <Card title="USERS" style={{ height: '100%' }}>
-          {transactions}
-        </Card>
-      </Col>
-      <Col span={12} style={{ padding: '8px' }}>
-        <Card title="STOCKS" style={{ height: '100%' }}>
-          {props.notifications
-            .filter((notif) => notif.type === 'stock')
-            .map((notif) => (
-              <p key={notif.time}>{notif.message}</p>
-            ))}
-        </Card>
-      </Col>
-    </div>
+    <Card title="USERS" style={{ minHeight: '700px', padding: '8px' }}>
+      {transactions}
+    </Card>
   );
 };
 
-const mapStateToProps = (state) => ({ notifications: state.notifications });
-
-export const NotificationView = connect(mapStateToProps)(BaseNotificationView);
+export const UserNotifications = connect(mapStateToProps)(
+  BaseUserNotifications
+);

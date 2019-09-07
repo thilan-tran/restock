@@ -29,7 +29,20 @@ export const initLeaderboard = () => {
 };
 
 export const setLeaderboard = (users) => {
-  return (dispatch) => {
+  return (dispatch, getState, socket) => {
+    const state = getState();
+
+    const newUsers = users.filter((id) => !state.leaderboard.includes(id));
+    console.log(newUsers);
+    newUsers.forEach(async (id) => {
+      socket.emit('subscribe', id);
+      const res = await axios.get(userUrl + id);
+      dispatch({
+        type: 'ADD_SUBSCRIBED',
+        user: res.data
+      });
+    });
+
     dispatch({
       type: 'SET_LEADERBOARD',
       users

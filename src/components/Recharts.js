@@ -95,7 +95,7 @@ export const TimeAreaChart = ({ type, data, dataKey }) => (
       />
       <Tooltip
         separator=" "
-        formatter={(val, name) => ['$' + val, name.toUpperCase()]}
+        formatter={(val, name) => ['$' + val.toFixed(2), name.toUpperCase()]}
         labelFormatter={(val) =>
           moment(val)
             .format('ddd HH:mm')

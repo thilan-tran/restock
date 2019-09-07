@@ -1,7 +1,8 @@
 const initState = {
   auth: {
     token: '',
-    userId: ''
+    userId: '',
+    username: ''
   },
   leaderboard: [],
   userTracking: [],
@@ -15,10 +16,10 @@ const initState = {
 const usersReducer = (state = initState, action) => {
   switch (action.type) {
     case 'LOGIN':
-      return { ...state, auth: { ...action.auth } };
+      return { ...state, auth: { ...action.auth, username: action.username } };
 
     case 'LOGOUT':
-      return { ...state, auth: initState.auth };
+      return { ...state, auth: initState.auth, userTracking: [] };
 
     case 'SET_LEADERBOARD':
       return { ...state, leaderboard: action.users };

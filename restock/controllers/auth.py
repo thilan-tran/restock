@@ -1,7 +1,8 @@
+import json
 from flask import Blueprint, request, jsonify
 from sqlalchemy.exc import IntegrityError
 
-from restock import db, bcrypt
+from restock import db, bcrypt, socketio
 from restock.models.user import User
 from restock.utils.errors import ErrorResponse
 
@@ -15,6 +16,10 @@ def register_new_user():
 
     db.session.add(user)
     db.session.commit()
+
+    users = User.query.order_by(User.value.desc()).limit(100).all()
+    user_ids = [u.id for u in users]
+    socketio.emit('leaderboard', json.dumps(user_ids))
 
     return jsonify(user.to_dict()), 200
 

@@ -1,6 +1,6 @@
 import time
 import json
-from flask import Flask
+from flask import Flask, render_template
 from flask_bcrypt import Bcrypt
 from flask_cors  import CORS
 from flask_sqlalchemy import SQLAlchemy
@@ -30,14 +30,11 @@ def on_unsubscribe(user_id):
     emit('message', 'unsubscribing from user ' + str(user_id))
     leave_room(user_id)
 
-# from restock.models.stock import TrackedStock
 
 @socketio.on('track')
 def on_subscribe(symbol):
     emit('message', 'subscribing to symbol ' + symbol)
     join_room(symbol)
-    # tracked = TrackedStock.query.filter_by(symbol=symbol).first()
-    # emit('init_tracking', json.dumps(tracked.to_dict()), room=symbol)
 
 
 @socketio.on('untrack')
@@ -47,7 +44,7 @@ def on_unsubscribe(symbol):
 
 
 def create_app(config=Config):
-    app = Flask(__name__)
+    app = Flask(__name__, static_folder="../build/static", template_folder="../build")
     app.config.from_object(config)
 
     bcrypt.init_app(app)
@@ -72,5 +69,10 @@ def create_app(config=Config):
     app.register_blueprint(stocks, url_prefix='/api/stocks')
     app.register_blueprint(tracking, url_prefix='/api/tracking')
     app.register_blueprint(errors)
+
+    @app.route("/")
+    @app.route("/<path:path>")
+    def react_app():
+        return render_template('index.html')
 
     return app

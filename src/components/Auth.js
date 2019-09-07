@@ -21,7 +21,6 @@ const BaseLogin = ({ form, login, history }) => {
           },
           values.remember
         );
-        console.log(history);
         history.goBack();
       }
     });
@@ -87,11 +86,7 @@ export const Login = withRouter(
   )(Form.create({ name: 'login' })(BaseLogin))
 );
 
-const BaseLogout = ({ logout }) => (
-  <a onClick={logout}>
-    <Icon type="logout" /> Logout
-  </a>
-);
+const BaseLogout = ({ logout }) => <a onClick={logout}>Logout</a>;
 
 export const Logout = connect(
   null,
@@ -107,8 +102,9 @@ const BaseRegister = ({ form, register, history }) => {
           username: values.username,
           email: values.email,
           password: values.password
-        });
-        history.push('/login');
+        })
+          .then(() => history.push('/login'))
+          .catch((err) => console.error(err));
       }
     });
   };

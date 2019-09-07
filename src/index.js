@@ -38,16 +38,12 @@ socket.on('update', (data) => {
   store.dispatch(updateSubscribed(jsonData));
 });
 
-// socket.on('init_tracking', (data) => {
-//   const tracking = JSON.parse(data);
-//   console.log(tracking);
-//   store.dispatch(initTracking(tracking));
-// });
-
 socket.on('update_tracking', (data) => {
   const tracking = JSON.parse(data);
   console.log(tracking);
-  store.dispatch(updateTracking(tracking.symbol, tracking.price));
+  store.dispatch(
+    updateTracking(tracking.symbol, tracking.price, tracking.prev_price)
+  );
 });
 
 ReactDOM.render(

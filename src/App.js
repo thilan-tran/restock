@@ -1,8 +1,8 @@
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { connect } from 'react-redux';
 import { BrowserRouter as Router } from 'react-router-dom';
 
-import { Layout } from 'antd';
+import { Layout, Alert, message } from 'antd';
 import 'antd/dist/antd.css';
 
 import { Navbar } from './components/Nav';
@@ -14,9 +14,16 @@ import { checkCachedUser } from './actions/auth';
 const { Header, Content, Footer } = Layout;
 
 const BaseApp = (props) => {
+  const [closed, setClosed] = useState(false);
+
   useEffect(() => {
     props.checkCachedUser();
-    // props.initLeaderboard();
+    const utcHrs = new Date().getUTCHours();
+    const utcDay = new Date().getUTCDay();
+    if (utcDay === 0 || utcDay === 6 || utcHrs >= 20 || utcHrs <= 13) {
+      setClosed(true);
+      message.warning('Stock market is currently closed.');
+    }
   }, []);
 
   return (
@@ -25,6 +32,16 @@ const BaseApp = (props) => {
         <Navbar />
 
         <Content style={{ padding: '0 50px', minHeight: 750 }}>
+          {closed ? (
+            <Alert
+              message="Stock market is currently closed (open weekdays 9:30AM - 4:00PM EST). Real-time notifications are disabled."
+              type="warning"
+              closable
+              style={{ margin: '15px' }}
+            />
+          ) : (
+            ''
+          )}
           <Routes />
         </Content>
 
