@@ -96,7 +96,7 @@ const BaseUserNotifications = (props) => {
     />
   ) : (
     <Empty
-      description="No recent transactions."
+      description="No recent transactions from users."
       style={{ marginTop: '150px' }}
     />
   );

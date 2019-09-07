@@ -77,7 +77,7 @@ export const login = (creds, cache = true) => {
 export const logout = () => {
   return (dispatch, getState, socket) => {
     const state = getState();
-    socket.emit('unsubscribe', state.auth.userId);
+    // socket.emit('unsubscribe', state.auth.userId);
     window.localStorage.removeItem('loggedUser');
     state.userTracking.forEach((symbol) => socket.emit('untrack', symbol));
     dispatch({ type: 'LOGOUT' });
