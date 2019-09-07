@@ -37,12 +37,12 @@ const formatCurrency = (value) =>
   value.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,');
 
 const getColor = (change) => {
-  const trim = Number(change.toString().toFixed(2));
+  const trim = Number(change.toFixed(2));
   return trim > 0 ? '#3f8600' : trim === 0 ? '#595959' : '#cf1322';
 };
 
 const getType = (change) => {
-  const trim = Number(change.toString().toFixed(2));
+  const trim = Number(change.toFixed(2));
   return trim > 0 ? 'arrow-up' : trim === 0 ? 'line' : 'arrow-down';
 };
 

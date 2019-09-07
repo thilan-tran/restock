@@ -4,12 +4,12 @@ import { Link } from 'react-router-dom';
 import { Statistic, Icon, Tag, Tooltip } from 'antd';
 
 const getColor = (change) => {
-  const trim = Number(change.toString().toFixed(2));
+  const trim = Number(change.toFixed(2));
   return trim > 0 ? '#3f8600' : trim === 0 ? '#595959' : '#cf1322';
 };
 
 const getType = (change) => {
-  const trim = Number(change.toString().toFixed(2));
+  const trim = Number(change.toFixed(2));
   return trim > 0 ? 'arrow-up' : trim === 0 ? 'line' : 'arrow-down';
 };
 
