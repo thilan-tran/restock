@@ -10,7 +10,7 @@ import usersReducer from './reducers/usersReducer';
 import { setLeaderboard, updateSubscribed } from './actions/users';
 import { initTracking, updateTracking } from './actions/tracking';
 
-const socket = socketIO.connect('http://localhost:3000');
+const socket = socketIO.connect(window.location.host);
 
 const store = createStore(
   usersReducer,

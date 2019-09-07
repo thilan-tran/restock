@@ -70,9 +70,9 @@ def create_app(config=Config):
     app.register_blueprint(tracking, url_prefix='/api/tracking')
     app.register_blueprint(errors)
 
-    @app.route("/")
+    @app.route("/", defaults={'path': ''})
     @app.route("/<path:path>")
-    def react_app():
+    def react_app(path):
         return render_template('index.html')
 
     return app
