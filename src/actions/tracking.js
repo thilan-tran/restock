@@ -110,7 +110,7 @@ export const updateTracking = (symbol, price, prevPrice) => {
     const state = getState();
     dispatch({ type: 'ACTIVATE_MESSAGE' });
     if (!state.activeMessage) {
-      message.info('New notifiations for stocks.', 10, () =>
+      message.info('New notifications for stocks.', 8, () =>
         dispatch({ type: 'DEACTIVATE_MESSAGE' })
       );
     }

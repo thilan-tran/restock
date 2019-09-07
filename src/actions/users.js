@@ -106,8 +106,8 @@ export const updateSubscribed = (data) => {
 
       const state = getState();
       dispatch({ type: 'ACTIVATE_MESSAGE' });
-      if (!state.activeMessage) {
-        message.info('New notifications for users.', 10, () =>
+      if (!state.activeMessage && update.user !== state.auth.username) {
+        message.info('New notifications for users.', 8, () =>
           dispatch({ type: 'DEACTIVATE_MESSAGE' })
         );
       }
