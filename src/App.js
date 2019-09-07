@@ -9,6 +9,7 @@ import { Navbar } from './components/Nav';
 import { Routes } from './components/Routes';
 
 import { initLeaderboard } from './actions/users';
+import { initOverview } from './actions/tracking';
 import { checkCachedUser } from './actions/auth';
 
 const { Header, Content, Footer } = Layout;
@@ -17,7 +18,10 @@ const BaseApp = (props) => {
   const [closed, setClosed] = useState(false);
 
   useEffect(() => {
+    props.initLeaderboard();
+    props.initOverview();
     props.checkCachedUser();
+
     const utcHrs = new Date().getUTCHours();
     const utcDay = new Date().getUTCDay();
     if (utcDay === 0 || utcDay === 6 || utcHrs >= 20 || utcHrs <= 13) {
@@ -55,6 +59,7 @@ const BaseApp = (props) => {
 
 const mapDispatchToProps = {
   initLeaderboard,
+  initOverview,
   checkCachedUser
 };
 

@@ -124,7 +124,7 @@ class StockAsset(db.Model):
     def sell_shares(self, num_shares):
         change = num_shares * self.aggregate.current_price
         if self.is_short:
-            change = num_shares * (2*self.init_price - self.aggregate.current_price)
+            change = 2*self.init_value - num_shares*self.aggregate.current_price
 
         print(change, 'to balance of', self.user.balance)
         self.shares -= num_shares

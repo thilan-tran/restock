@@ -3,6 +3,12 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Statistic, Icon, Tag, Tooltip } from 'antd';
 
+const getColor = (change) =>
+  change > 0 ? '#3f8600' : change === 0 ? '#595959' : '#cf1322';
+
+const getType = (change) =>
+  change > 0 ? 'arrow-up' : change === 0 ? 'line' : 'arrow-down';
+
 export const simpleColumns = () => {
   const symbol = {
     title: 'Symbol',
@@ -38,24 +44,9 @@ export const simpleColumns = () => {
           value={priceChange}
           precision={2}
           valueStyle={{
-            color:
-              priceChange > 0
-                ? '#3f8600'
-                : priceChange === 0
-                ? '#595959'
-                : '#cf1322'
+            color: getColor(priceChange)
           }}
-          prefix={
-            <Icon
-              type={
-                priceChange > 0
-                  ? 'arrow-up'
-                  : priceChange === 0
-                  ? 'line'
-                  : 'arrow-down'
-              }
-            />
-          }
+          prefix={<Icon type={getType(priceChange)} />}
         />
       );
     }
@@ -108,24 +99,9 @@ export const trackingColumns = () => {
           value={priceChange}
           precision={2}
           valueStyle={{
-            color:
-              priceChange > 0
-                ? '#3f8600'
-                : priceChange === 0
-                ? '#595959'
-                : '#cf1322'
+            color: getColor(priceChange)
           }}
-          prefix={
-            <Icon
-              type={
-                priceChange > 0
-                  ? 'arrow-up'
-                  : priceChange === 0
-                  ? 'line'
-                  : 'arrow-down'
-              }
-            />
-          }
+          prefix={<Icon type={getType(priceChange)} />}
         />
       );
     }
@@ -168,6 +144,7 @@ export const portfolioColumns = (compact) => {
     render: (text, record) => {
       const priceChange = record.current_price - record.prev_price;
 
+      console.log(priceChange);
       return (
         <span>
           <Statistic
@@ -179,24 +156,9 @@ export const portfolioColumns = (compact) => {
             value={priceChange}
             precision={2}
             valueStyle={{
-              color:
-                priceChange > 0
-                  ? '#3f8600'
-                  : priceChange === 0
-                  ? '#595959'
-                  : '#cf1322'
+              color: getColor(priceChange)
             }}
-            prefix={
-              <Icon
-                type={
-                  priceChange > 0
-                    ? 'arrow-up'
-                    : priceChange === 0
-                    ? 'line'
-                    : 'arrow-down'
-                }
-              />
-            }
+            prefix={<Icon type={getType(priceChange)} />}
           />
         </span>
       );
@@ -222,6 +184,7 @@ export const portfolioColumns = (compact) => {
       change = record.short ? -1 * change : change;
       const percentChange = (change / record.init_value) * 100;
 
+      console.log(change, change > 0, change === 0, getType(change));
       return (
         <Tooltip
           title={`${
@@ -234,39 +197,17 @@ export const portfolioColumns = (compact) => {
             value={change.toFixed(2)}
             precision={2}
             valueStyle={{
-              color:
-                change > 0 ? '#3f8600' : change === 0 ? '#595959' : '#cf1322'
+              color: getColor(change)
             }}
-            prefix={
-              <Icon
-                type={
-                  change > 0 ? 'arrow-up' : change === 0 ? 'line' : 'arrow-down'
-                }
-              />
-            }
+            prefix={<Icon type={getType(change)} />}
           />
           <Statistic
-            value={percentChange.toFixed(2)}
+            value={percentChange}
             precision={4}
             valueStyle={{
-              color:
-                percentChange > 0
-                  ? '#3f8600'
-                  : percentChange === 0
-                  ? '#595959'
-                  : '#cf1322'
+              color: getColor(percentChange)
             }}
-            prefix={
-              <Icon
-                type={
-                  percentChange > 0
-                    ? 'arrow-up'
-                    : percentChange === 0
-                    ? 'line'
-                    : 'arrow-down'
-                }
-              />
-            }
+            prefix={<Icon type={getType(percentChange)} />}
             suffix="%"
           />
         </Tooltip>
@@ -333,7 +274,6 @@ export const transactionColumns = (showUser) => {
     width: '20%',
     sorter: (a, b) => a.shares - b.shares,
     sortDirections: ['descend', 'ascend'],
-    defaultSortOrder: 'descend',
     render: (text) => (
       <Statistic value={text} prefix={<Icon type="pie-chart" />} />
     )
@@ -386,9 +326,13 @@ export const transactionColumns = (showUser) => {
           </Tooltip>
         )}
         {record.purchase ? (
-          <Tag color="blue">buy</Tag>
+          <Tooltip title="Buying stocks transacts funds from user balance.">
+            <Tag color="blue">buy</Tag>
+          </Tooltip>
         ) : (
-          <Tag color="red">sell</Tag>
+          <Tooltip title="Selling stock returns funds to user balance.">
+            <Tag color="red">sell</Tag>
+          </Tooltip>
         )}
       </span>
     )
@@ -401,7 +345,8 @@ export const transactionColumns = (showUser) => {
     sorter: (a, b) =>
       new Date(a.timestamp.split(' ')[0] + 'T' + a.timestamp.split(' ')[1]) -
       new Date(b.timestamp.split(' ')[0] + 'T' + b.timestamp.split(' ')[1]),
-    sortDirections: ['descend', 'ascend']
+    sortDirections: ['descend', 'ascend'],
+    defaultSortOrder: 'descend'
   };
 
   return showUser

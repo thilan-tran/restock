@@ -36,6 +36,12 @@ import { initOverview, addTracking, removeTracking } from '../actions/tracking';
 const formatCurrency = (value) =>
   value.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,');
 
+const getColor = (change) =>
+  change > 0 ? '#3f8600' : change === 0 ? '#595959' : '#cf1322';
+
+const getType = (change) =>
+  change > 0 ? 'arrow-up' : change === 0 ? 'line' : 'arrow-down';
+
 const BaseStockOverview = ({
   stock,
   expanded,
@@ -75,7 +81,7 @@ const BaseStockOverview = ({
           <br />
           <Col span={12}>
             <Statistic
-              title="Price"
+              title={expanded ? 'Price' : ''}
               value={stock.price}
               precision={2}
               prefix={<Icon type="dollar" />}
@@ -83,37 +89,37 @@ const BaseStockOverview = ({
           </Col>
           <Col span={6}>
             <Statistic
-              title="Daily Change"
+              title={expanded ? 'Daily Change' : ''}
               value={change}
               precision={2}
               valueStyle={{
-                color: change >= 0 ? '#3f8600' : '#cf1322'
+                color: getColor(change)
               }}
-              prefix={<Icon type={change >= 0 ? 'arrow-up' : 'arrow-down'} />}
+              prefix={<Icon type={getType(change)} />}
             />
           </Col>
           <Col span={6}>
             <Statistic
-              title="Percent Change"
+              title={expanded ? 'Percent Change' : ''}
               value={percentChange}
               precision={2}
               valueStyle={{
-                color: percentChange >= 0 ? '#3f8600' : '#cf1322'
+                color: getColor(percentChange)
               }}
-              prefix={
-                <Icon type={percentChange >= 0 ? 'arrow-up' : 'arrow-down'} />
-              }
+              prefix={<Icon type={getType(percentChange)} />}
               suffix="%"
             />
           </Col>
           {expanded ? (
-            <Button
-              onClick={onClick}
-              style={{ width: '100%', marginTop: '30px' }}
-              type={tracked ? 'danger' : 'primary'}
-            >
-              {tracked ? 'Untrack Stock' : 'Track Stock'}
-            </Button>
+            <Tooltip title="Track stocks for real-time updates when the market is open.">
+              <Button
+                onClick={onClick}
+                style={{ width: '100%', marginTop: '30px' }}
+                type={tracked ? 'danger' : 'primary'}
+              >
+                {tracked ? 'Untrack Stock' : 'Track Stock'}
+              </Button>
+            </Tooltip>
           ) : (
             ''
           )}
@@ -164,10 +170,20 @@ const BaseSliderInput = ({
   );
   const shortShares = shortAsset ? shortAsset.shares : 0;
 
-  const [value, setValue] = useState(defaultVal);
-  const [cost, setCost] = useState(defaultVal * price);
   const [type, setType] = useState('long');
   const [transactType, setTransactType] = useState('buy');
+
+  const min = 1;
+  let max = 2000;
+
+  if (transactType === 'sell' && type === 'long') max = longShares;
+  else if (transactType === 'sell' && type === 'short') max = shortShares;
+  else if (transactType === 'buy') max = Math.trunc(balance / price);
+
+  const [value, setValue] = useState(defaultVal > max ? max : defaultVal);
+  const [cost, setCost] = useState(
+    (defaultVal > max ? max : defaultVal) * price
+  );
 
   const onMenuClick = () => {
     if (!auth.token) {
@@ -185,13 +201,6 @@ const BaseSliderInput = ({
       }
     }
   };
-
-  const min = 1;
-  let max = 2000;
-
-  if (transactType === 'sell' && type === 'long') max = longShares;
-  else if (transactType === 'sell' && type === 'short') max = shortShares;
-  else if (transactType === 'buy') max = Math.trunc(balance / price);
 
   return (
     <div>
@@ -472,7 +481,7 @@ const BaseStockView = (props) => {
         <Col xs={24} sm={24} md={12} lg={16} xl={16} style={{ padding: '8px' }}>
           {props.auth.userId ? (
             <Card
-              title="TRANSACTIONS"
+              title="TRADING"
               tabList={transactTabList}
               activeTabKey={transactTab}
               onTabChange={(key) => setTransactTab(key)}
@@ -486,7 +495,7 @@ const BaseStockView = (props) => {
               <Empty
                 description={
                   <span>
-                    <Link to="/login">Log in</Link> for transactions.
+                    <Link to="/login">Log in</Link> to trade stock.
                   </span>
                 }
               />
@@ -552,7 +561,7 @@ const BaseStockList = (props) => {
   const [option, setOption] = useState(['activity', 'decreasing']);
 
   useEffect(() => {
-    props.initOverview();
+    // props.initOverview();
   }, []);
 
   if (!props.init) return <StockListSkeleton />;

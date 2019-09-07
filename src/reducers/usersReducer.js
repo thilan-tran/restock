@@ -10,7 +10,8 @@ const initState = {
   tracking: [],
   notifications: [],
   leaderboardInitialized: false,
-  overviewInitialized: false
+  overviewInitialized: false,
+  activeMessage: false
 };
 
 const usersReducer = (state = initState, action) => {
@@ -112,35 +113,17 @@ const usersReducer = (state = initState, action) => {
         notifications: state.notifications.concat(action.notification)
       };
 
-    // case 'NEW_TRANSACTION':
-    //   return {
-    //     ...state,
-    //     subscribed: state.subscribed.map((user) => {
-    //       if (user.username === action.transaction.user) {
-    //         return {
-    //           ...user,
-    //           transactions: user.transactions.concat(action.transaction)
-    //         };
-    //       }
-    //       return user;
-    //     })
-    //   };
+    case 'ACTIVATE_MESSAGE':
+      return {
+        ...state,
+        activeMessage: true
+      };
 
-    // case 'DELETE_TRANSACTION':
-    //   return {
-    //     ...state,
-    //     subscribed: state.subscribed.map((user) => {
-    //       if (user.username === action.user) {
-    //         return {
-    //           ...user,
-    //           stocks: user.transactions.filter(
-    //             (stock) => stock.id !== action.id
-    //           )
-    //         };
-    //       }
-    //       return user;
-    //     })
-    //   };
+    case 'DEACTIVATE_MESSAGE':
+      return {
+        ...state,
+        activeMessage: false
+      };
 
     default:
       return state;

@@ -73,7 +73,7 @@ export const addTracking = (symbol, prevPrice = null, saveUser = false) => {
 
 export const updateTracking = (symbol, price, prevPrice) => {
   const message = `${symbol.toUpperCase()} updated to $${price}`;
-  return (dispatch) => {
+  return (dispatch, getState) => {
     dispatch({
       type: 'UPDATE_TRACKING',
       symbol,
@@ -90,6 +90,14 @@ export const updateTracking = (symbol, price, prevPrice) => {
         timestamp: new Date()
       }
     });
+
+    const state = getState();
+    dispatch({ type: 'ACTIVATE_MESSAGE' });
+    if (!state.activeMessage) {
+      message.info('New notifiations for stocks.', 10, () =>
+        dispatch({ type: 'DEACTIVATE_MESSAGE' })
+      );
+    }
   };
 };
 

@@ -37,7 +37,7 @@ const getColor = (change) =>
 const getType = (change) =>
   change > 0 ? 'arrow-up' : change === 0 ? 'line' : 'arrow-down';
 
-const BaseUserOverview = ({ user, history }) => {
+const BaseUserOverview = ({ user, history, expanded }) => {
   const [tab, setTab] = useState('overview');
 
   const dailyRecords = user.records.daily_records;
@@ -77,7 +77,7 @@ const BaseUserOverview = ({ user, history }) => {
         <span>
           <Statistic
             title="Daily Change"
-            value={change}
+            value={change.toFixed(2)}
             precision={2}
             valueStyle={{
               color: getColor(change)
@@ -85,7 +85,7 @@ const BaseUserOverview = ({ user, history }) => {
             prefix={<Icon type={getType(change)} />}
           />
           <Statistic
-            value={percentChange}
+            value={percentChange.toFixed(2)}
             precision={4}
             valueStyle={{
               color: getColor(percentChange)
@@ -99,7 +99,7 @@ const BaseUserOverview = ({ user, history }) => {
         <span>
           <Statistic
             title="Overall Change"
-            value={overallChange}
+            value={overallChange.toFixed(2)}
             precision={2}
             valueStyle={{
               color: getColor(overallChange)
@@ -107,7 +107,7 @@ const BaseUserOverview = ({ user, history }) => {
             prefix={<Icon type={getType(overallChange)} />}
           />
           <Statistic
-            value={overallPercentChange}
+            value={overallPercentChange.toFixed(2)}
             precision={4}
             valueStyle={{
               color: getColor(overallPercentChange)
@@ -179,13 +179,22 @@ const BaseUserOverview = ({ user, history }) => {
     <Col style={{ padding: '8px' }}>
       <Card
         hoverable
-        tabList={[
-          { tab: 'Overview', key: 'overview' },
-          { tab: 'Portfolio', key: 'portfolio' },
-          { tab: 'Transactions', key: 'transactions' },
-          { tab: 'Tracking', key: 'tracking' },
-          { tab: 'Details', key: 'details' }
-        ]}
+        tabList={
+          expanded
+            ? [
+                { tab: 'Overview', key: 'overview' },
+                { tab: 'Portfolio', key: 'portfolio' },
+                { tab: 'Transactions', key: 'transactions' },
+                { tab: 'Tracking', key: 'tracking' }
+              ]
+            : [
+                { tab: 'Overview', key: 'overview' },
+                { tab: 'Portfolio', key: 'portfolio' },
+                { tab: 'Transactions', key: 'transactions' },
+                { tab: 'Tracking', key: 'tracking' },
+                { tab: 'Details', key: 'details' }
+              ]
+        }
         activeTabKey={tab}
         onTabChange={(key) => {
           if (key !== 'details') {
@@ -271,7 +280,7 @@ const BaseUserView = ({ id, addSubscribed, removeSubscribed, subscribed }) => {
 
   return (
     <div>
-      <UserOverview user={user} />
+      <UserOverview user={user} expanded />
 
       <Col span={24} style={{ padding: '8px' }}>
         <Card
@@ -308,7 +317,7 @@ export const UserView = connect(
 
 const BaseLeaderboard = (props) => {
   useEffect(() => {
-    props.initLeaderboard();
+    // props.initLeaderboard();
   }, []);
 
   const [option, setOption] = useState(['value', 'decreasing']);

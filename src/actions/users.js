@@ -84,7 +84,7 @@ export const updateSubscribed = (data) => {
   //   message = `${update.user} stopped tracking ${update.symbol}.`;
   // }
 
-  return (dispatch) => {
+  return (dispatch, getState) => {
     dispatch({
       type: 'UPDATE_SUBSCRIBED',
       user
@@ -100,6 +100,14 @@ export const updateSubscribed = (data) => {
           time: new Date()
         }
       });
+
+      const state = getState();
+      dispatch({ type: 'ACTIVATE_MESSAGE' });
+      if (!state.activeMessage) {
+        message.info('New notifiations for users.', 10, () =>
+          dispatch({ type: 'DEACTIVATE_MESSAGE' })
+        );
+      }
     }
   };
 };
@@ -134,6 +142,7 @@ export const createTransaction = (transaction, token) => {
       // type: 'NEW_TRANSACTION',
       // transaction: res.data
     });
+    message.success('Transaction succesful.');
   };
 };
 
@@ -154,6 +163,7 @@ export const removeTransaction = (transaction, token) => {
       // id,
       // user
     });
+    message.success('Transaction succesful.');
   };
 };
 
