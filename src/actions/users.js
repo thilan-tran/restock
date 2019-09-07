@@ -73,9 +73,9 @@ export const updateSubscribed = (data) => {
   // });
 
   const { type, update, user } = data;
-  let message = '';
+  let msg = '';
   if (type === 'transaction') {
-    message = `${update.user} ${update.purchase ? 'purchased' : 'sold'} ${
+    msg = `${update.user} ${update.purchase ? 'purchased' : 'sold'} ${
       update.shares
     } ${
       update.short ? 'short' : 'long'
@@ -92,13 +92,13 @@ export const updateSubscribed = (data) => {
       type: 'UPDATE_SUBSCRIBED',
       user
     });
-    if (message) {
-      console.log(message);
+    if (msg) {
+      console.log(msg);
       dispatch({
         type: 'ADD_NOTIFICATION',
         notification: {
           type: 'user',
-          message,
+          message: msg,
           update,
           time: new Date()
         }
@@ -107,7 +107,7 @@ export const updateSubscribed = (data) => {
       const state = getState();
       dispatch({ type: 'ACTIVATE_MESSAGE' });
       if (!state.activeMessage) {
-        message.info('New notifiations for users.', 10, () =>
+        message.info('New notifications for users.', 10, () =>
           dispatch({ type: 'DEACTIVATE_MESSAGE' })
         );
       }

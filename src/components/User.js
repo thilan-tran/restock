@@ -3,6 +3,7 @@ import { connect } from 'react-redux';
 import { withRouter } from 'react-router';
 import { Link } from 'react-router-dom';
 import {
+  message,
   Breadcrumb,
   Cascader,
   Avatar,
@@ -31,11 +32,15 @@ import {
 } from '../actions/users';
 import StockService from '../services/StockService';
 
-const getColor = (change) =>
-  change > 0 ? '#3f8600' : change === 0 ? '#595959' : '#cf1322';
+const getColor = (change) => {
+  const trim = Number(change.toString().toFixed(2));
+  return trim > 0 ? '#3f8600' : trim === 0 ? '#595959' : '#cf1322';
+};
 
-const getType = (change) =>
-  change > 0 ? 'arrow-up' : change === 0 ? 'line' : 'arrow-down';
+const getType = (change) => {
+  const trim = Number(change.toString().toFixed(2));
+  return trim > 0 ? 'arrow-up' : trim === 0 ? 'line' : 'arrow-down';
+};
 
 const BaseUserOverview = ({ user, history, expanded }) => {
   const [tab, setTab] = useState('overview');
@@ -226,12 +231,22 @@ const mapStateToProps = (state) => ({
 
 const mapDispatchToProps = { addSubscribed, removeSubscribed, initLeaderboard };
 
-const BaseUserView = ({ id, addSubscribed, removeSubscribed, subscribed }) => {
+const BaseUserView = ({
+  id,
+  addSubscribed,
+  removeSubscribed,
+  subscribed,
+  history
+}) => {
   const [tab, setTab] = useState('0');
   const [option, setOption] = useState('value');
 
   useEffect(() => {
-    addSubscribed(id);
+    addSubscribed(id).catch((err) => {
+      console.error(err.response);
+      message.error('No such user with that id.', 10);
+      history.goBack();
+    });
 
     return () => {
       removeSubscribed(id);
@@ -311,10 +326,12 @@ const BaseUserView = ({ id, addSubscribed, removeSubscribed, subscribed }) => {
   );
 };
 
-export const UserView = connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(BaseUserView);
+export const UserView = withRouter(
+  connect(
+    mapStateToProps,
+    mapDispatchToProps
+  )(BaseUserView)
+);
 
 const BaseLeaderboard = (props) => {
   useEffect(() => {

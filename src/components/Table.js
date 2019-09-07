@@ -3,11 +3,15 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Statistic, Icon, Tag, Tooltip } from 'antd';
 
-const getColor = (change) =>
-  change > 0 ? '#3f8600' : change === 0 ? '#595959' : '#cf1322';
+const getColor = (change) => {
+  const trim = Number(change.toString().toFixed(2));
+  return trim > 0 ? '#3f8600' : trim === 0 ? '#595959' : '#cf1322';
+};
 
-const getType = (change) =>
-  change > 0 ? 'arrow-up' : change === 0 ? 'line' : 'arrow-down';
+const getType = (change) => {
+  const trim = Number(change.toString().toFixed(2));
+  return trim > 0 ? 'arrow-up' : trim === 0 ? 'line' : 'arrow-down';
+};
 
 export const simpleColumns = () => {
   const symbol = {
@@ -144,7 +148,6 @@ export const portfolioColumns = (compact) => {
     render: (text, record) => {
       const priceChange = record.current_price - record.prev_price;
 
-      console.log(priceChange);
       return (
         <span>
           <Statistic

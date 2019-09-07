@@ -124,11 +124,12 @@ class StockAsset(db.Model):
     def sell_shares(self, num_shares):
         change = num_shares * self.aggregate.current_price
         if self.is_short:
-            change = 2*self.init_value - num_shares*self.aggregate.current_price
+            change = 2*(self.init_value / self.shares * num_shares) - num_shares*self.aggregate.current_price
 
         print(change, 'to balance of', self.user.balance)
+        self.init_value -= self.init_value / self.shares * num_shares
         self.shares -= num_shares
-        self.init_value -= self.aggregate.current_price * num_shares
+        # self.init_value -= self.aggregate.current_price * num_shares
         update_balance_records(self.user.balance + change, self.user)
 
     def update_price(self, change):
@@ -152,6 +153,7 @@ class StockTransaction(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     symbol = db.Column(db.String(10), unique=False, nullable=False)
+    company = db.Column(db.String(255), unique=False, nullable=True)
     price = db.Column(db.Float, nullable=False)
     shares = db.Column(db.Integer, nullable=False)
     is_short = db.Column(db.Boolean, nullable=False)
@@ -166,6 +168,7 @@ class StockTransaction(db.Model):
 
     def __init__(self, shares, asset, purchase=True):
         self.symbol = asset.symbol
+        self.company = asset.aggregate.company
         self.price = asset.aggregate.current_price
         self.shares = shares
         self.is_short = asset.is_short
@@ -187,7 +190,7 @@ class StockTransaction(db.Model):
     def to_dict(self):
         return {
             'symbol': self.symbol,
-            'company': self.asset.aggregate.company,
+            'company': self.company,
             'price': self.price,
             'shares': self.shares,
             'short': self.is_short,

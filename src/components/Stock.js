@@ -36,11 +36,15 @@ import { initOverview, addTracking, removeTracking } from '../actions/tracking';
 const formatCurrency = (value) =>
   value.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,');
 
-const getColor = (change) =>
-  change > 0 ? '#3f8600' : change === 0 ? '#595959' : '#cf1322';
+const getColor = (change) => {
+  const trim = Number(change.toString().toFixed(2));
+  return trim > 0 ? '#3f8600' : trim === 0 ? '#595959' : '#cf1322';
+};
 
-const getType = (change) =>
-  change > 0 ? 'arrow-up' : change === 0 ? 'line' : 'arrow-down';
+const getType = (change) => {
+  const trim = Number(change.toString().toFixed(2));
+  return trim > 0 ? 'arrow-up' : trim === 0 ? 'line' : 'arrow-down';
+};
 
 const BaseStockOverview = ({
   stock,
