@@ -231,7 +231,7 @@ export const portfolioColumns = (compact) => {
           }.`}
         >
           <Statistic
-            value={change}
+            value={change.toFixed(2)}
             precision={2}
             valueStyle={{
               color:
@@ -246,7 +246,7 @@ export const portfolioColumns = (compact) => {
             }
           />
           <Statistic
-            value={percentChange}
+            value={percentChange.toFixed(2)}
             precision={4}
             valueStyle={{
               color:

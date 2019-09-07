@@ -22,6 +22,7 @@
   "scripts": {
     "start": "PORT=3002 react-scripts start",
     "build": "react-scripts build",
+    "full": "git commit -am 'Production build.' && react-scripts build && git push && git push production master",
     "test": "react-scripts test --env=jsdom",
     "eject": "react-scripts eject"
   }

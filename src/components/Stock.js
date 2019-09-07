@@ -265,8 +265,8 @@ const BaseSliderInput = ({
             placement="topRight"
             title={`${
               transactType === 'buy' ? 'Buy' : 'Sell'
-            } ${value} shares for a total of $${formatCurrency(
-              cost
+            } ${value} shares for a total of $${formatCurrency(cost).toFixed(
+              2
             )}, with a new balance of $${
               transactType === 'buy'
                 ? formatCurrency((balance - cost).toFixed(2))
