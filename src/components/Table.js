@@ -184,7 +184,6 @@ export const portfolioColumns = (compact) => {
       change = record.short ? -1 * change : change;
       const percentChange = (change / record.init_value) * 100;
 
-      console.log(change, change > 0, change === 0, getType(change));
       return (
         <Tooltip
           title={`${
@@ -202,7 +201,7 @@ export const portfolioColumns = (compact) => {
             prefix={<Icon type={getType(change)} />}
           />
           <Statistic
-            value={percentChange}
+            value={percentChange.toFixed(2)}
             precision={4}
             valueStyle={{
               color: getColor(percentChange)

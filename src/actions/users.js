@@ -10,6 +10,7 @@ export const initLeaderboard = () => {
     const state = getState();
     if (!state.leaderboardInitialized) {
       const res = await axios.get(userUrl + 'leaderboard');
+
       res.data.forEach((user) => {
         socket.emit('subscribe', user.id);
         dispatch({
@@ -21,7 +22,9 @@ export const initLeaderboard = () => {
         type: 'SET_LEADERBOARD',
         users: res.data.map((elem) => elem.id)
       });
+
       dispatch({ type: 'LEADERBOARD_INIT' });
+      console.log('initialized leaderboard');
     } else {
       console.log('already initialized leaderboard');
     }

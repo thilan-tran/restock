@@ -285,9 +285,15 @@ const BaseSliderInput = ({
             okText="Yes"
             cancelText="No"
           >
-            <Button type="primary" disabled={Number(value) <= 0}>
-              Confirm
-            </Button>
+            {Number(value) <= 0 ? (
+              <Tooltip title="Cannot trade zero shares.">
+                <Button type="primary" disabled={true}>
+                  Confirm
+                </Button>
+              </Tooltip>
+            ) : (
+              <Button type="primary">Confirm</Button>
+            )}
           </Popconfirm>
         </Col>
       </Row>
@@ -337,16 +343,13 @@ const BaseStockView = (props) => {
       })
       .catch((err) => {
         console.error(err.response);
-        if (err.response.status === 400) {
-          message.error(
-            'Requests exceeded, please try again in 10 seconds.',
-            10
-          );
-          props.history.goBack();
-        } else if (err.response.status === 404) {
-          message.error(`No such stock with symbol ${props.symbol}.`, 10);
-          props.history.goBack();
-        }
+        // if (err.response.status === 400) {
+        message.error('Requests exceeded, please try again in 10 seconds.', 10);
+        props.history.goBack();
+        // } else if (err.response.status === 404) {
+        //   message.error(`No such stock with symbol ${props.symbol}.`, 10);
+        //   props.history.goBack();
+        // }
       });
 
     return () => {

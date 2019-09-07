@@ -11,7 +11,20 @@ export const initOverview = () => {
 
     if (!state.overviewInitialized) {
       const res = await axios.get(overviewUrl);
-      res.data.forEach(async (stock) => {
+
+      // res.data.forEach(async (stock) => {
+      //   const stockRes = await axios.post(trackingUrl, {
+      //     symbol: stock.ticker.toLowerCase(),
+      //     prev_price: stock.price - stock.changes
+      //   });
+      //   socket.emit('track', stock.ticker.toLowerCase());
+      //   dispatch({
+      //     type: 'ADD_TRACKING',
+      //     tracking: stockRes.data
+      //   });
+      // });
+
+      const promises = res.data.map(async (stock) => {
         const stockRes = await axios.post(trackingUrl, {
           symbol: stock.ticker.toLowerCase(),
           prev_price: stock.price - stock.changes
@@ -22,7 +35,10 @@ export const initOverview = () => {
           tracking: stockRes.data
         });
       });
+
+      await Promise.all(promises);
       dispatch({ type: 'OVERVIEW_INIT' });
+      console.log('initialized overview');
     } else {
       console.log('already initialized overview');
     }

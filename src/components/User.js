@@ -220,7 +220,8 @@ export const UserOverview = withRouter(BaseUserOverview);
 const mapStateToProps = (state) => ({
   auth: state.auth,
   leaderboard: state.leaderboard,
-  subscribed: state.subscribed
+  subscribed: state.subscribed,
+  init: state.leaderboardInitialized
 });
 
 const mapDispatchToProps = { addSubscribed, removeSubscribed, initLeaderboard };
@@ -322,7 +323,7 @@ const BaseLeaderboard = (props) => {
 
   const [option, setOption] = useState(['value', 'decreasing']);
 
-  if (!props.subscribed.length)
+  if (!props.init)
     return (
       <div>
         <Row type="flex" align="middle">
