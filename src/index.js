@@ -10,7 +10,9 @@ import usersReducer from './reducers/usersReducer';
 import { setLeaderboard, updateSubscribed } from './actions/users';
 import { initTracking, updateTracking } from './actions/tracking';
 
-const socket = socketIO.connect(window.location.host);
+const socket = socketIO.connect(window.location.host, {
+  transports: ['websocket']
+});
 
 const store = createStore(
   usersReducer,
