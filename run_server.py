@@ -23,4 +23,4 @@ def start_polling():
     timer.start()
 
 if __name__ == '__main__':
-    app.run(port=Config.PORT, debug=Config.DEBUG)
+    app.run(port=Config.PORT, debug=Config.DEBUG, threaded=True)

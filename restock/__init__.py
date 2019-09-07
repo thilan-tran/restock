@@ -16,7 +16,7 @@ cors = CORS()
 
 @socketio.on('connect')
 def on_connect():
-    emit('message', 'connection succesful')
+    emit('message', 'connection successful')
 
 
 @socketio.on('subscribe')

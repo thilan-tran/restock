@@ -1,1 +1,1 @@
-web: gunicorn run_server:app
+web: gunicorn run_server:app -w 4
