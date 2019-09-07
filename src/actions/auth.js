@@ -70,6 +70,7 @@ export const login = (creds, cache = true) => {
     } catch (err) {
       console.error(err.response);
       message.error('Invalid username or password.');
+      throw err;
     }
   };
 };

@@ -20,8 +20,9 @@ const BaseLogin = ({ form, login, history }) => {
             password: values.password
           },
           values.remember
-        );
-        history.goBack();
+        )
+          .then(() => history.goBack())
+          .catch((err) => console.error(err));
       }
     });
   };
