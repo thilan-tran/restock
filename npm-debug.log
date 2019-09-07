@@ -1,0 +1,46 @@
+0 info it worked if it ends with ok
+1 verbose cli [ '/usr/bin/node', '/usr/bin/npm', 'run', 'full' ]
+2 info using npm@3.5.2
+3 info using node@v8.10.0
+4 verbose run-script [ 'prefull', 'full', 'postfull' ]
+5 info lifecycle restock-app@0.1.0~prefull: restock-app@0.1.0
+6 silly lifecycle restock-app@0.1.0~prefull: no script for prefull, continuing
+7 info lifecycle restock-app@0.1.0~full: restock-app@0.1.0
+8 verbose lifecycle restock-app@0.1.0~full: unsafe-perm in lifecycle true
+9 verbose lifecycle restock-app@0.1.0~full: PATH: /usr/share/npm/bin/node-gyp-bin:/mnt/c/Users/Thilan/Documents/code/projects/restock-project/node_modules/.bin:/mnt/c/Users/Thilan/Documents/Code/projects/restock-project/env/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/mnt/c/Program Files (x86)/Common Files/Oracle/Java/javapath:/mnt/c/WINDOWS/system32:/mnt/c/WINDOWS:/mnt/c/WINDOWS/System32/Wbem:/mnt/c/WINDOWS/System32/WindowsPowerShell/v1.0/:/mnt/c/WINDOWS/System32/OpenSSH/:/mnt/c/Program Files (x86)/NVIDIA Corporation/PhysX/Common:/mnt/c/Program Files/NVIDIA Corporation/NVIDIA NvDLISR:/mnt/c/Program Files/Microsoft VS Code/bin:/mnt/c/WINDOWS/system32:/mnt/c/WINDOWS:/mnt/c/WINDOWS/System32/Wbem:/mnt/c/WINDOWS/System32/WindowsPowerShell/v1.0/:/mnt/c/WINDOWS/System32/OpenSSH/:/mnt/c/Program Files/Git/cmd:/mnt/c/Program Files/nodejs/:/mnt/c/Users/Thilan/AppData/Local/Programs/Python/Python37-32/Scripts/:/mnt/c/Users/Thilan/AppData/Local/Programs/Python/Python37-32/:/mnt/c/Users/Thilan/Downloads/Code/Compilors/Borland C++/Borland/BCC55/Bin:/mnt/c/Program Files/Microsoft VS Code/bin:/mnt/c/Users/Thilan/AppData/Local/atom/bin:/mnt/c/Users/Thilan/AppData/Local/Microsoft/WindowsApps:/mnt/c/Users/Thilan/AppData/Roaming/npm:/mnt/c/Users/Thilan/bin:/snap/bin
+10 verbose lifecycle restock-app@0.1.0~full: CWD: /mnt/c/Users/Thilan/Documents/code/projects/restock-project
+11 silly lifecycle restock-app@0.1.0~full: Args: [ '-c',
+11 silly lifecycle   'react-scripts build && git add . && git commit -m \'Production build.\' && git push && git push production master' ]
+12 silly lifecycle restock-app@0.1.0~full: Returned: code: 128  signal: null
+13 info lifecycle restock-app@0.1.0~full: Failed to exec full script
+14 verbose stack Error: restock-app@0.1.0 full: `react-scripts build && git add . && git commit -m 'Production build.' && git push && git push production master`
+14 verbose stack Exit status 128
+14 verbose stack     at EventEmitter.<anonymous> (/usr/share/npm/lib/utils/lifecycle.js:232:16)
+14 verbose stack     at emitTwo (events.js:126:13)
+14 verbose stack     at EventEmitter.emit (events.js:214:7)
+14 verbose stack     at ChildProcess.<anonymous> (/usr/share/npm/lib/utils/spawn.js:24:14)
+14 verbose stack     at emitTwo (events.js:126:13)
+14 verbose stack     at ChildProcess.emit (events.js:214:7)
+14 verbose stack     at maybeClose (internal/child_process.js:925:16)
+14 verbose stack     at Process.ChildProcess._handle.onexit (internal/child_process.js:209:5)
+15 verbose pkgid restock-app@0.1.0
+16 verbose cwd /mnt/c/Users/Thilan/Documents/code/projects/restock-project
+17 error Linux 4.4.0-18362-Microsoft
+18 error argv "/usr/bin/node" "/usr/bin/npm" "run" "full"
+19 error node v8.10.0
+20 error npm  v3.5.2
+21 error code ELIFECYCLE
+22 error restock-app@0.1.0 full: `react-scripts build && git add . && git commit -m 'Production build.' && git push && git push production master`
+22 error Exit status 128
+23 error Failed at the restock-app@0.1.0 full script 'react-scripts build && git add . && git commit -m 'Production build.' && git push && git push production master'.
+23 error Make sure you have the latest version of node.js and npm installed.
+23 error If you do, this is most likely a problem with the restock-app package,
+23 error not with npm itself.
+23 error Tell the author that this fails on your system:
+23 error     react-scripts build && git add . && git commit -m 'Production build.' && git push && git push production master
+23 error You can get information on how to open an issue for this project with:
+23 error     npm bugs restock-app
+23 error Or if that isn't available, you can get their info via:
+23 error     npm owner ls restock-app
+23 error There is likely additional logging output above.
+24 verbose exit [ 1, true ]
