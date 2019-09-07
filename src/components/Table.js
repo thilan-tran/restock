@@ -222,8 +222,6 @@ export const portfolioColumns = (compact) => {
       change = record.short ? -1 * change : change;
       const percentChange = (change / record.init_value) * 100;
 
-      console.log(change, percentChange);
-
       return (
         <Tooltip
           title={`${
