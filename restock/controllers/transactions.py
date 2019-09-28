@@ -65,7 +65,6 @@ def buy_stock_asset():
 @transactions.route('/', methods=['DELETE'])
 def sell_stock_asset():
     auth_header = request.headers.get('Authorization')
-    print(auth_header)
     if auth_header:
         try:
             token = auth_header.split(' ')[1]

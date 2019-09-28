@@ -22,6 +22,9 @@ const BaseApp = (props) => {
     props.initOverview();
     props.checkCachedUser();
 
+    const offset = (-1 * new Date().getTimezoneOffset()) / 60;
+    console.log(offset);
+
     const utcHrs = new Date().getUTCHours();
     const utcDay = new Date().getUTCDay();
     if (utcDay === 0 || utcDay === 6 || utcHrs >= 20 || utcHrs <= 13) {

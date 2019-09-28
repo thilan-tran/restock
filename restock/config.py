@@ -12,11 +12,11 @@ class BaseConfig:
 
 class DevelopmentConfig(BaseConfig):
     DEBUG = True
-    MAX_RECORDS = 50
+    MAX_RECORDS = 5
 
 class ProductionConfig(BaseConfig):
     DEBUG = False
-    MAX_RECORDS = 500
+    MAX_RECORDS = 150
 
 configs = {
     'development': DevelopmentConfig,

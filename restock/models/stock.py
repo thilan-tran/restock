@@ -21,7 +21,7 @@ class StockAggregate(db.Model):
         self.current_price = price
         self.ask_size = ask_size
         self.prev_price = prev_price if prev_price else self.current_price
-        self.timestamp = datetime.datetime.now()
+        self.timestamp = datetime.datetime.utcnow()
         self.prev_timestamp = self.timestamp
 
     def __repr__(self):
@@ -47,7 +47,7 @@ class StockAggregate(db.Model):
         self.ask_size = new_size
 
     def update_price(self, new_price):
-        timestamp = datetime.datetime.now()
+        timestamp = datetime.datetime.utcnow()
         time_diff = timestamp - self.prev_timestamp
         if time_diff.days >= 1:
             self.prev_price = self.current_price
@@ -84,7 +84,7 @@ class StockAsset(db.Model):
         self.is_short = short
         self.user = user
         self.aggregate = aggregate
-        self.timestamp = datetime.datetime.now()
+        self.timestamp = datetime.datetime.utcnow()
 
     def clean_up(self):
         print(self.shares*self.current_price, 'to balance of', self.user.balance)
@@ -142,7 +142,7 @@ class StockAsset(db.Model):
             # self.current_price = new_price
             update_balance_records(self.user.balance, self.user)
 
-        # timestamp = datetime.datetime.now()
+        # timestamp = datetime.datetime.utcnow()
         # time_diff = timestamp - self.prev_timestamp
         # if time_diff.days >= 1:
         #     self.prev_price = new_price
@@ -175,7 +175,7 @@ class StockTransaction(db.Model):
         self.is_purchase = purchase
         self.user = asset.user
         self.asset = asset
-        self.timestamp = datetime.datetime.now()
+        self.timestamp = datetime.datetime.utcnow()
 
         if purchase:
             self.asset.add_shares(shares)
@@ -238,7 +238,7 @@ class TrackedStock(db.Model):
         self.symbol = aggregate.symbol
         self.user = user
         self.aggregate = aggregate
-        self.timestamp = datetime.datetime.now()
+        self.timestamp = datetime.datetime.utcnow()
 
     def __repr__(self):
         return \

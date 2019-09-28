@@ -22,7 +22,7 @@ class User(db.Model):
         self.password = bcrypt.generate_password_hash(password).decode()
         self.balance = 100000
         self.value = 100000
-        self.date_registered = datetime.datetime.now()
+        self.date_registered = datetime.datetime.utcnow()
 
         LatestRecord(self.balance, self.value, self)
         HourlyRecord(self.balance, self.value, self)
@@ -87,7 +87,7 @@ class RecordMixin():
         self.balance = balance
         self.value = value
         self.user = user
-        self.timestamp = datetime.datetime.now()
+        self.timestamp = datetime.datetime.utcnow()
 
     def __repr__(self):
         return "Record(balance={balance}, value={value}, user='{user}')".format(**self.to_dict())
@@ -131,8 +131,11 @@ def update_and_limit_record(Record, new_balance, new_value, user):
     new_record = Record(new_balance, new_value, user)
     count = Record.query.filter_by(user=user).count()
 
+    # time_ordered = Record.query.order_by(Record.timestamp.desc()).all()
+    # print(time_ordered)
+
     while count > Config.MAX_RECORDS:
-        to_delete = Record.query.filter_by(user=user).first()
+        to_delete = Record.query.filter_by(user=user).order_by(Record.timestamp).first()
         db.session.delete(to_delete)
         count = Record.query.filter_by(user=user).count()
 
@@ -149,22 +152,22 @@ def update_balance_records(new_balance, user):
 
     new_record = update_and_limit_record(LatestRecord, new_balance, new_value, user)
 
-    last_record = HourlyRecord.query.filter_by(user=user).order_by(HourlyRecord.id.desc()).first()
+    last_record = HourlyRecord.query.filter_by(user=user).order_by(HourlyRecord.timestamp.desc()).first()
     time_diff = new_record.timestamp - last_record.timestamp
     if time_diff.days >= 1 or time_diff.seconds >= 3600:
         update_and_limit_record(HourlyRecord, new_balance, new_value, user)
 
-    last_record = DailyRecord.query.filter_by(user=user).order_by(DailyRecord.id.desc()).first()
+    last_record = DailyRecord.query.filter_by(user=user).order_by(DailyRecord.timestamp.desc()).first()
     time_diff = new_record.timestamp - last_record.timestamp
     if time_diff.days >= 1:
         update_and_limit_record(DailyRecord, new_balance, new_value, user)
 
-    last_record = WeeklyRecord.query.filter_by(user=user).order_by(WeeklyRecord.id.desc()).first()
+    last_record = WeeklyRecord.query.filter_by(user=user).order_by(WeeklyRecord.timestamp.desc()).first()
     time_diff = new_record.timestamp - last_record.timestamp
     if time_diff.days >= 7:
         update_and_limit_record(WeeklyRecord, new_balance, new_value, user)
 
-    last_record = MonthlyRecord.query.filter_by(user=user).order_by(MonthlyRecord.id.desc()).first()
+    last_record = MonthlyRecord.query.filter_by(user=user).order_by(MonthlyRecord.timestamp.desc()).first()
     time_diff = new_record.timestamp - last_record.timestamp
     if time_diff.days >= 28:
         update_and_limit_record(MonthlyRecord, new_balance, new_value, user)

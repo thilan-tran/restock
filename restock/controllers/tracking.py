@@ -32,7 +32,6 @@ def add_new_tracking():
     else:
         user = None
 
-    print(user)
     symbol = request.json['symbol']
     prev_price = request.json.get('prev_price')
 

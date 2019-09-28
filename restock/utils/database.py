@@ -54,14 +54,14 @@ def update_all_stocks():
                     'prev_price': prev_price
                 }), room=symbol.symbol)
 
-        else:
-            print('No change in', symbol.symbol)
+        # else:
+        #     print('No change in', symbol.symbol)
 
     users = User.query.order_by(User.value.desc()).limit(100).all()
     user_ids = [u.id for u in users]
     if set(prev_user_ids) != set(user_ids):
         socketio.emit('leaderboard', json.dumps(user_ids))
-    else:
-        print('No change in leaderboard')
+    # else:
+    #     print('No change in leaderboard')
 
     return aggregates
